@@ -12,6 +12,8 @@ Import this directory as a LaraPaper recipe plugin archive.
 Set these fields after import:
 
 - `image_url`: public direct image URL for the map.
+- `image_scale`: CSS scale value for cropping legends or borders.
+- `image_position`: CSS position/origin for the crop.
 
 The default is the National Weather Service CONUS radar image:
 
@@ -28,3 +30,5 @@ https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/uspvu/current.png
 ```
 
 Use the copied URL as `image_url`.
+
+For Weather Underground regional maps, `image_scale=1.12` and `image_position=center top` usually hides the bottom legend.

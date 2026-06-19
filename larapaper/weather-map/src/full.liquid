@@ -1,4 +1,6 @@
 {% assign map_url = image_url | default: "https://radar.weather.gov/ridge/standard/CONUS_0.gif" %}
+{% assign map_scale = image_scale | default: "1.12" %}
+{% assign map_position = image_position | default: "center top" %}
 {% assign cache_bust = "now" | date: "%s" %}
 {% assign cache_separator = "?" %}
 {% if map_url contains "?" %}
@@ -18,8 +20,10 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
+    object-position: {{ map_position }};
     filter: grayscale(1) contrast(1.15);
+    transform: scale({{ map_scale }});
+    transform-origin: {{ map_position }};
   }
 </style>
 

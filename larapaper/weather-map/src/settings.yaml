@@ -5,7 +5,7 @@ refresh_interval: 15
 no_screen_padding: "yes"
 dark_mode: "no"
 framework_version: latest
-static_data: '{"image_url":"https://radar.weather.gov/ridge/standard/CONUS_0.gif"}'
+static_data: '{"image_url":"https://radar.weather.gov/ridge/standard/CONUS_0.gif","image_scale":"1.12","image_position":"center top"}'
 custom_fields:
   - keyname: image_url
     field_type: string
@@ -15,3 +15,19 @@ custom_fields:
     description: Direct URL for a public map image.
     placeholder: https://radar.weather.gov/ridge/standard/CONUS_0.gif
     default: https://radar.weather.gov/ridge/standard/CONUS_0.gif
+  - keyname: image_scale
+    field_type: string
+    type: string
+    name: Image scale
+    label: Image scale
+    description: CSS scale value used to crop legends or borders.
+    placeholder: "1.12"
+    default: "1.12"
+  - keyname: image_position
+    field_type: string
+    type: string
+    name: Image position
+    label: Image position
+    description: CSS object-position and transform-origin.
+    placeholder: center top
+    default: center top
