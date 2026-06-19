@@ -14,7 +14,10 @@ Set these fields after import:
 - `username`: GitHub username to display.
 - `github_token`: GitHub token used for the GraphQL request.
 
-The token needs access to GitHub's GraphQL API. Public contribution data does not require repo scopes, but GitHub still requires authentication for this endpoint.
+The token needs access to GitHub's GraphQL API. Public contribution data does not require private repo access. Use a valid unexpired token:
+
+- fine-grained PAT: public repository read access is enough.
+- classic PAT: `public_repo` is enough if selecting repo scopes.
 
 ## Token Check
 
@@ -24,4 +27,4 @@ Put `GITHUB_TOKEN=...` in `.env`, then run:
 task github:test-token USERNAME=octocat
 ```
 
-If local auth works but LaraPaper returns `401`, re-paste the raw token value into the recipe field with no quotes or `Bearer` prefix.
+If local auth works but LaraPaper returns `401`, re-paste the raw token value into the recipe field with no quotes or `Bearer` prefix. `.env` is only used by the local test task; LaraPaper uses the imported recipe's `github_token` field.
