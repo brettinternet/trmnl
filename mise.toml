@@ -1,0 +1,8 @@
+[tools]
+"aqua:cli/cli" = "latest"
+"aqua:evilmartians/lefthook" = "latest"
+"aqua:gitleaks/gitleaks" = "latest"
+"aqua:go-task/task" = "latest"
+"aqua:jqlang/jq" = "latest"
+bun = "latest"
+direnv = "latest"

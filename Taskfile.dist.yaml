@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+dotenv: [.env]
+
+includes:
+  setup: .taskfiles/setup.yaml
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task -l
+
+  init:
+    desc: Install dependencies and setup environment
+    aliases: [setup]
+    cmds:
+      - task: setup:init
+
+  check:
+    desc: Run local checks
+    cmds:
+      - mise exec gitleaks -- gitleaks git --redact --verbose --no-banner
+
+  github:test-token:
+    desc: Test GitHub GraphQL auth with GITHUB_TOKEN
+    requires:
+      vars: [USERNAME]
+    preconditions:
+      - sh: test -n "$GITHUB_TOKEN"
+        msg: GITHUB_TOKEN is missing from .env
+    cmds:
+      - |
+        GH_TOKEN="$GITHUB_TOKEN" gh api graphql \
+          -f query='query($userName: String!) { user(login: $userName) { contributionsCollection { contributionCalendar { totalContributions } } } }' \
+          -f userName='{{.USERNAME}}'
