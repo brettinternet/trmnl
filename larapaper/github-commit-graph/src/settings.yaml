@@ -1,0 +1,32 @@
+name: GitHub Commit Graph
+no_screen_padding: no
+dark_mode: no
+strategy: polling
+polling_verb: post
+polling_url: https://api.github.com/graphql
+polling_headers: |
+  Authorization=Bearer {{ github_token }}
+  Content-Type=application/json
+  Accept=application/vnd.github+json
+  User-Agent=trmnl-larapaper-recipe
+  X-GitHub-Api-Version=2022-11-28
+polling_body: |
+  {"query":"query($userName: String!) { user(login: $userName) { contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { contributionCount date } } } } } }","variables":{"userName":"{{ username }}"}}
+refresh_interval: 60
+framework_version: 2.0
+custom_fields:
+  - keyname: username
+    field_type: string
+    type: string
+    name: GitHub username
+    label: GitHub username
+    description: Public GitHub username to render.
+    placeholder: octocat
+    default: octocat
+  - keyname: github_token
+    field_type: password
+    type: password
+    name: GitHub token
+    label: GitHub token
+    description: Fine-grained or classic token used only for GitHub GraphQL contribution data.
+    placeholder: github_pat_...

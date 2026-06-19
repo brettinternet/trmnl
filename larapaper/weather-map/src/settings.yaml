@@ -1,0 +1,25 @@
+---
+name: Weather Map
+strategy: static
+refresh_interval: 15
+no_screen_padding: "yes"
+dark_mode: "no"
+framework_version: latest
+static_data: '{"image_url":"https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/uspvu/current.png","label":"Weather Map"}'
+custom_fields:
+  - keyname: image_url
+    field_type: string
+    type: string
+    name: Image URL
+    label: Image URL
+    description: Direct URL for a public map image.
+    placeholder: https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/uspvu/current.png
+    default: https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/uspvu/current.png
+  - keyname: label
+    field_type: string
+    type: string
+    name: Label
+    label: Label
+    description: Short label shown on the map.
+    placeholder: Weather Map
+    default: Weather Map
