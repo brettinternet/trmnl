@@ -14,6 +14,12 @@ Set these fields after import:
 - `image_url`: public direct image URL for the map.
 - `label`: short label shown on the map.
 
+The default is the National Weather Service CONUS radar image:
+
+```text
+https://radar.weather.gov/ridge/standard/CONUS_0.gif
+```
+
 ## Weather Underground URLs
 
 Open https://www.wunderground.com/radar/us, choose a region, then use `Image Link` and copy the direct image URL. It should look like:

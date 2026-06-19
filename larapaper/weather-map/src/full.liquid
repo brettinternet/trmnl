@@ -1,5 +1,5 @@
-{% assign map_url = image_url | default: "https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/uspvu/current.png" %}
-{% assign map_label = label | default: "Weather Map" %}
+{% assign map_url = image_url | default: "https://radar.weather.gov/ridge/standard/CONUS_0.gif" %}
+{% assign map_label = label | default: "US Weather Map" %}
 {% assign cache_bust = "now" | date: "%s" %}
 {% assign cache_separator = "?" %}
 {% if map_url contains "?" %}
