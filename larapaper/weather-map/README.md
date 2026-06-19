@@ -15,6 +15,8 @@ Set these fields after import:
 - `image_scale`: CSS scale value for cropping legends or borders.
 - `image_position`: CSS position/origin for the crop.
 
+The template reads these from LaraPaper custom fields. No data payload is required.
+
 The default is the National Weather Service CONUS radar image:
 
 ```text

@@ -1,6 +1,7 @@
-{% assign map_url = image_url | default: "https://radar.weather.gov/ridge/standard/CONUS_0.gif" %}
-{% assign map_scale = image_scale | default: "1.12" %}
-{% assign map_position = image_position | default: "center top" %}
+{% assign custom_fields = trmnl.plugin_settings.custom_fields_values %}
+{% assign map_url = custom_fields.image_url | default: config.image_url | default: image_url | default: "https://radar.weather.gov/ridge/standard/CONUS_0.gif" %}
+{% assign map_scale = custom_fields.image_scale | default: config.image_scale | default: image_scale | default: "1.12" %}
+{% assign map_position = custom_fields.image_position | default: config.image_position | default: image_position | default: "center top" %}
 {% assign cache_bust = "now" | date: "%s" %}
 {% assign cache_separator = "?" %}
 {% if map_url contains "?" %}

@@ -5,7 +5,7 @@ refresh_interval: 15
 no_screen_padding: "yes"
 dark_mode: "no"
 framework_version: latest
-static_data: '{"image_url":"https://radar.weather.gov/ridge/standard/CONUS_0.gif","image_scale":"1.12","image_position":"center top"}'
+static_data: '{}'
 custom_fields:
   - keyname: image_url
     field_type: string
