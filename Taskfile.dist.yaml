@@ -36,3 +36,24 @@ tasks:
         GH_TOKEN="$GITHUB_TOKEN" gh api graphql \
           -f query='query($userName: String!) { user(login: $userName) { contributionsCollection { contributionCalendar { totalContributions } } } }' \
           -f userName='{{.USERNAME}}'
+
+  github:test-polling-request:
+    desc: Test the exact GitHub GraphQL polling request with GITHUB_TOKEN
+    requires:
+      vars: [USERNAME]
+    preconditions:
+      - sh: test -n "$GITHUB_TOKEN"
+        msg: GITHUB_TOKEN is missing from .env
+    cmds:
+      - |
+        body=$(printf '%s' '{"query":"query($userName: String!) { user(login: $userName) { contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { contributionCount date } } } } } }","variables":{"userName":"{{.USERNAME}}"}}')
+
+        curl --silent --show-error --fail-with-body \
+          --request POST \
+          --header "Authorization: Bearer $GITHUB_TOKEN" \
+          --header "Content-Type: application/json" \
+          --header "Accept: application/vnd.github+json" \
+          --header "User-Agent: trmnl-larapaper-recipe" \
+          --header "X-GitHub-Api-Version: 2022-11-28" \
+          --data "$body" \
+          https://api.github.com/graphql

@@ -5,11 +5,11 @@ strategy: polling
 polling_verb: post
 polling_url: https://api.github.com/graphql
 polling_headers: |
-  Authorization=Bearer {{ github_token }}
-  Content-Type=application/json
-  Accept=application/vnd.github+json
-  User-Agent=trmnl-larapaper-recipe
-  X-GitHub-Api-Version=2022-11-28
+  Authorization: Bearer {{ github_token }}
+  Content-Type: application/json
+  Accept: application/vnd.github+json
+  User-Agent: trmnl-larapaper-recipe
+  X-GitHub-Api-Version: 2022-11-28
 polling_body: |
   {"query":"query($userName: String!) { user(login: $userName) { contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { contributionCount date } } } } } }","variables":{"userName":"{{ username }}"}}
 refresh_interval: 60
