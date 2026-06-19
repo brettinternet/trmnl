@@ -12,7 +12,6 @@ Import this directory as a LaraPaper recipe plugin archive.
 Set these fields after import:
 
 - `image_url`: public direct image URL for the map.
-- `label`: short label shown on the map.
 
 The default is the National Weather Service CONUS radar image:
 

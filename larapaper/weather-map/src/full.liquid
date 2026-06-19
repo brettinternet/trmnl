@@ -1,5 +1,4 @@
 {% assign map_url = image_url | default: "https://radar.weather.gov/ridge/standard/CONUS_0.gif" %}
-{% assign map_label = label | default: "US Weather Map" %}
 {% assign cache_bust = "now" | date: "%s" %}
 {% assign cache_separator = "?" %}
 {% if map_url contains "?" %}
@@ -22,20 +21,8 @@
     object-position: center;
     filter: grayscale(1) contrast(1.15);
   }
-
-  .map-image__label {
-    position: absolute;
-    left: 10px;
-    bottom: 8px;
-    padding: 3px 7px;
-    font-size: 14px;
-    line-height: 1;
-    background: white;
-    border: 1px solid black;
-  }
 </style>
 
 <div class="map-image">
-  <img src="{{ map_url }}{{ cache_separator }}v={{ cache_bust }}" alt="{{ map_label }}">
-  <div class="map-image__label">{{ map_label }}</div>
+  <img src="{{ map_url }}{{ cache_separator }}v={{ cache_bust }}" alt="">
 </div>
