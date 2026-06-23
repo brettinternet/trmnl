@@ -1,0 +1,30 @@
+name: Home Assistant Calendar
+no_screen_padding: no
+dark_mode: no
+strategy: polling
+polling_verb: get
+polling_url: |
+  https://{{ home_assistant_domain }}/api/calendars/calendar.{{ calendar_entity_id }}?start={{ "now" | date: "%Y-%m-%d" }}T00:00:00Z&end={{ "now" | date: "%s" | plus: 1209600 | date: "%Y-%m-%d" }}T00:00:00Z
+polling_headers: |
+  Authorization: Bearer {{ api_token }}
+  Content-Type: application/json
+refresh_interval: 15
+custom_fields:
+  - keyname: api_token
+    field_type: password
+    type: password
+    name: Home Assistant API token
+    label: API token
+    description: API token for Home Assistant to access the calendar data.
+  - keyname: home_assistant_domain
+    field_type: string
+    type: string
+    name: Home Assistant domain
+    label: Home Assistant domain
+    description: Domain of your Home Assistant instance (e.g., ha.example.com).
+  - keyname: calendar_entity_id
+    field_type: string
+    type: string
+    name: Calendar entity ID
+    label: Calendar entity ID
+    description: The entity ID of the calendar in Home Assistant (e.g., calendar.my_calendar).
