@@ -7,11 +7,11 @@
     $today = Carbon::now($tz)->startOfDay();
 
     // Pretty Calendar is really a 2-week rolling view, not a full month.
-    // Start on Monday of this week, show 14 days.
-    $calendarStart = $today->copy()->startOfWeek(Carbon::MONDAY);
+    // Start on Sunday of this week, show 14 days.
+    $calendarStart = $today->copy()->startOfWeek(Carbon::SUNDAY);
     $calendarDays = 14;
 
-    $dayNamesShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    $dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     $monthNamesShort = [
         1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
         5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug',
