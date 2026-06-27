@@ -1,1 +1,7 @@
 .env
+/Taskfile.yml
+/Taskfile.yaml
+AGENTS.local.md
+.task
+.DS_Store
+.worktrees
