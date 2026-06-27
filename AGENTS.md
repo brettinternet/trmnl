@@ -1,5 +1,7 @@
 # AGENTS.md
 
+This repo holds TRMNL recipes (plugins) targeting [Larapaper](https://github.com/usetrmnl/larapaper), a self-hosted Laravel BYOS/BYOD server for [TRMNL](https://docs.trmnl.com/go/diy/byos) e-ink devices. Recipes render screens server-side; import a recipe directory as a Larapaper plugin archive.
+
 - Be terse.
 - Recipes live in `larapaper/<recipe>/` with `README.md`, `src/settings.yaml`, and one template.
 - Keep root setup in `Taskfile.dist.yaml`, `.taskfiles/`, `mise.toml`, and `lefthook.yaml`.
