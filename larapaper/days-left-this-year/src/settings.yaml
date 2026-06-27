@@ -4,13 +4,13 @@ refresh_interval: 60
 no_screen_padding: no
 dark_mode: no
 framework_version: 2.0
-static_data: '{}'
+static_data: "{}"
 custom_fields:
   - keyname: timezone
     field_type: string
     type: string
     name: Timezone
     label: Timezone
-    description: PHP timezone identifier used to determine the current date (e.g. America/Chicago, Europe/London, Asia/Tokyo).
-    placeholder: America/Chicago
-    default: America/Chicago
+    description: PHP timezone identifier used to determine the current date (e.g. America/Denver, Europe/London, Asia/Tokyo).
+    placeholder: America/Denver
+    default: America/Denver
