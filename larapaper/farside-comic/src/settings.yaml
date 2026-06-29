@@ -1,0 +1,28 @@
+---
+name: Far Side Comic
+strategy: polling
+polling_verb: get
+polling_url: https://comiccaster.xyz/feeds/farside-daily.xml
+polling_headers: |
+  Accept: application/rss+xml, application/xml;q=0.9, */*;q=0.8
+refresh_interval: 360
+no_screen_padding: "no"
+dark_mode: "no"
+framework_version: 2.0
+custom_fields:
+  - keyname: comic_position
+    field_type: string
+    type: string
+    name: Comic position
+    label: Comic position
+    description: 1 selects the newest feed item; increase to show older items from the feed.
+    placeholder: "1"
+    default: "1"
+  - keyname: show_caption
+    field_type: string
+    type: string
+    name: Show caption
+    label: Show caption
+    description: Use yes to show the Far Side caption under the comic, or no to hide it.
+    placeholder: "yes"
+    default: "yes"
