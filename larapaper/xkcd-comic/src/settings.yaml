@@ -1,0 +1,36 @@
+---
+name: XKCD Comic
+strategy: polling
+polling_verb: get
+polling_url: >-
+  {%- assign custom_fields = trmnl.plugin_settings.custom_fields_values -%}
+  {%- assign mode = custom_fields.mode | default: mode | default: 'latest' -%}
+  {%- assign latest_comic_number = custom_fields.latest_comic_number | default: latest_comic_number | default: 3265 | plus: 0 -%}
+  {%- assign s = "now" | date: "%s" | plus: 0 -%}
+  {%- assign m = "now" | date: "%M" | plus: 0 -%}
+  {%- assign d = "now" | date: "%j" | plus: 0 -%}
+  {%- assign seed = s | plus: m | times: 37 | plus: d | times: 101 -%}
+  {%- assign comic_number = seed | modulo: latest_comic_number | plus: 1 -%}
+  {%- if comic_number == 404 -%}{%- assign comic_number = 405 -%}{%- endif -%}
+  {%- if mode == 'random' -%}https://xkcd.com/{{ comic_number }}/info.0.json{%- else -%}https://xkcd.com/info.0.json{%- endif -%}
+refresh_interval: 360
+no_screen_padding: "yes"
+dark_mode: "no"
+framework_version: 2.0
+custom_fields:
+  - keyname: mode
+    field_type: string
+    type: string
+    name: Mode
+    label: Mode
+    description: Use latest for the newest comic or random for a deterministic random comic per refresh.
+    placeholder: latest
+    default: latest
+  - keyname: latest_comic_number
+    field_type: string
+    type: string
+    name: Latest comic number
+    label: Latest comic number
+    description: Upper bound used for random mode. Update occasionally; latest mode ignores this.
+    placeholder: "3265"
+    default: "3265"
