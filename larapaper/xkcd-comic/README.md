@@ -9,11 +9,10 @@ Import this directory as a LaraPaper recipe plugin archive.
 
 ## Configuration
 
-Set `mode` to one of:
+No configuration is required. The recipe renders the latest comic from XKCD's official JSON endpoint:
 
-- `latest`: render the newest comic from `https://xkcd.com/info.0.json`.
-- `random`: render a deterministic random comic URL per refresh using XKCD's numbered `info.0.json` endpoints.
+```text
+https://xkcd.com/info.0.json
+```
 
-`latest_comic_number` is only used by random mode as the upper bound. The default is `3265`, current as of 2026-06-29. Update it occasionally so random mode can include newer comics.
-
-Comic number 404 is skipped because XKCD does not publish a JSON endpoint for that number.
+XKCD's official JSON API also supports numbered comic URLs, but it does not provide a random JSON endpoint.
