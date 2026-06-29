@@ -7,7 +7,7 @@ Renders one comic from the unofficial ComicCaster Far Side daily RSS feed, inclu
 ## Files
 
 - `src/settings.yaml` declares the RSS polling request and configurable fields.
-- `src/full.blade.php` renders the TRMNL-compatible Blade view.
+- `src/full.liquid` renders the TRMNL-compatible Liquid view.
 
 ## Configuration
 

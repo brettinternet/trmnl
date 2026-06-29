@@ -1,0 +1,139 @@
+{% assign custom_fields = trmnl.plugin_settings.custom_fields_values %}
+{% assign comic_position = custom_fields.comic_position | default: config.comic_position | default: "1" | plus: 0 %}
+{% if comic_position < 1 %}
+  {% assign comic_position = 1 %}
+{% endif %}
+{% assign show_caption_value = custom_fields.show_caption | default: config.show_caption | default: "yes" | downcase %}
+{% assign show_caption = true %}
+{% if show_caption_value == "no" or show_caption_value == "false" or show_caption_value == "0" %}
+  {% assign show_caption = false %}
+{% endif %}
+
+{% assign items = rss.channel.item | default: data.rss.channel.item %}
+{% assign selected_item = items.last | default: items.first %}
+{% for item in items %}
+  {% if forloop.index == comic_position %}
+    {% assign selected_item = item %}
+  {% endif %}
+{% endfor %}
+
+{% assign title = selected_item.title | default: "The Far Side" %}
+{% assign link = selected_item.link | default: "https://www.thefarside.com/" %}
+{% assign published_label = selected_item.pubDate | date: "%b %-d, %Y" %}
+{% assign description = selected_item.description | default: "" %}
+
+{% assign image_url = "" %}
+{% if description contains 'src="' %}
+  {% assign image_parts = description | split: 'src="' %}
+  {% assign image_url = image_parts[1] | split: '"' | first %}
+{% endif %}
+
+{% assign caption = "" %}
+{% assign paragraphs = description | split: "<p" %}
+{% for paragraph in paragraphs %}
+  {% if caption == "" and paragraph contains "</p>" and paragraph contains ">" %}
+    {% unless paragraph contains "Visit The Far Side" or paragraph contains "Gary Larson" %}
+      {% assign caption_parts = paragraph | split: ">" %}
+      {% assign caption_candidate = caption_parts[1] | split: "</p" | first | strip_html | replace: "\n", " " | strip %}
+      {% if caption_candidate != "" %}
+        {% assign caption = caption_candidate %}
+      {% endif %}
+    {% endunless %}
+  {% endif %}
+{% endfor %}
+
+{% assign has_comic = false %}
+{% if selected_item and image_url != "" %}
+  {% assign has_comic = true %}
+{% endif %}
+{% assign alt_text = caption | default: title %}
+{% assign instance_text = published_label | default: link %}
+
+<style>
+  .farside-screen {
+    background: #ffffff;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    padding: 12px 16px 8px;
+    width: 100%;
+  }
+
+  .farside-screen__image-wrap {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .farside-screen__image {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: grayscale(1) contrast(1.08);
+    height: 94%;
+    width: 94%;
+  }
+
+  .farside-screen__caption {
+    flex: 0 0 auto;
+    font-size: 16px;
+    font-style: italic;
+    line-height: 1.15;
+    margin-top: 4px;
+    max-height: 58px;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .farside-screen__footer {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+    font-size: 13px;
+    justify-content: space-between;
+    line-height: 1;
+    margin-top: 5px;
+    width: 100%;
+  }
+
+  .farside-screen__error {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+</style>
+
+<div class="farside-screen">
+  {% if has_comic %}
+    <div class="farside-screen__image-wrap">
+      <div class="farside-screen__image" style="background-image: url('{{ image_url }}');" role="img" aria-label="{{ alt_text }}"></div>
+    </div>
+
+    {% if show_caption and caption != "" %}
+      <div class="farside-screen__caption">{{ caption }}</div>
+    {% endif %}
+
+    <div class="farside-screen__footer">
+      <span>The Far Side</span>
+      <span>{{ instance_text }}</span>
+    </div>
+  {% else %}
+    <div class="farside-screen__error">
+      <span class="value value--large">Far Side unavailable</span>
+      <span class="label">Check the ComicCaster RSS feed</span>
+    </div>
+
+    <div class="farside-screen__footer">
+      <span>The Far Side</span>
+      <span>No comic image found</span>
+    </div>
+  {% endif %}
+</div>

@@ -28,7 +28,7 @@ https://radar.weather.gov/ridge/standard/CONUS_0.gif
 Open https://www.wunderground.com/radar/us, choose a region, then use `Image Link` and copy the direct image URL. It should look like:
 
 ```text
-https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/uspvu/current.png
+https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/conus/current.png
 ```
 
 Use the copied URL as `image_url`.
