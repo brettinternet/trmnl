@@ -1,0 +1,59 @@
+name: Apple Reminders Bridge
+no_screen_padding: no
+dark_mode: no
+strategy: polling
+polling_verb: post
+polling_url: |
+  {{ bridge_url }}
+polling_headers: |
+  Authorization: Bearer {{ bridge_token }}
+  Content-Type: application/json
+  Accept: application/json
+polling_body: |
+  {"view":"{{ reminder_view }}","list":"{{ list_name }}","days":{{ scheduled_days | default: 7 }},"timezone":"{{ timezone }}"}
+refresh_interval: 15
+framework_version: 2.0
+custom_fields:
+  - keyname: bridge_url
+    field_type: string
+    type: string
+    name: Bridge URL
+    label: Bridge URL
+    description: HTTPS endpoint that returns normalized Apple Reminders JSON.
+    placeholder: https://reminders.example.com/api/reminders
+  - keyname: bridge_token
+    field_type: password
+    type: password
+    name: Bridge token
+    label: Bridge token
+    description: Bearer token for the bridge endpoint. Do not use an Apple Account password here.
+  - keyname: reminder_view
+    field_type: string
+    type: string
+    name: Reminder view
+    label: Reminder view
+    description: Use today, scheduled, or list.
+    placeholder: today
+    default: today
+  - keyname: list_name
+    field_type: string
+    type: string
+    name: List name
+    label: List name
+    description: Apple Reminders list name, used only when Reminder view is list.
+    placeholder: Groceries
+  - keyname: scheduled_days
+    field_type: number
+    type: number
+    name: Scheduled days
+    label: Scheduled days
+    description: Number of days ahead for the scheduled view.
+    default: 7
+  - keyname: timezone
+    field_type: string
+    type: string
+    name: Timezone
+    label: Timezone
+    description: IANA timezone for display and bridge filtering.
+    placeholder: America/Chicago
+    default: America/Chicago
