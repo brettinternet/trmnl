@@ -1,0 +1,126 @@
+---
+name: Weather Glance
+strategy: polling
+polling_verb: get
+polling_url: |
+  https://customer-api.open-meteo.com/v1/forecast?latitude={{ latitude | default: 33.03 }}&longitude={{ longitude | default: -84.94 }}&hourly=weather_code,temperature_2m&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&temperature_unit={{ temp_unit | default: 'fahrenheit' }}&apikey={{ 'WWV5NDhqVVFWNFFKY05mQw==' | base64_decode }}
+refresh_interval: 60
+no_screen_padding: "yes"
+dark_mode: "no"
+framework_version: latest
+custom_fields:
+  - keyname: latitude
+    field_type: string
+    type: string
+    name: Latitude
+    label: Latitude
+    description: Your location's latitude.
+    placeholder: Latitude
+    help_text: 'Search for your location at <a href="https://www.latlong.net">latlong.net</a> and copy the value here.'
+  - keyname: longitude
+    field_type: string
+    type: string
+    name: Longitude
+    label: Longitude
+    description: Your location's longitude.
+    placeholder: Longitude
+    help_text: 'Search for your location at <a href="https://www.latlong.net">latlong.net</a> and copy the value here.'
+  - keyname: temp_unit
+    field_type: select
+    type: string
+    name: Temperature Unit
+    label: Temperature Unit
+    description: Celsius or Fahrenheit?
+    default: fahrenheit
+    options:
+      - Celsius: celsius
+      - Fahrenheit: fahrenheit
+  - keyname: forecast_interval
+    field_type: select
+    type: string
+    name: Forecast Interval
+    label: Forecast Interval
+    description: How detailed should the timeline be?
+    default: daily
+    options:
+      - Hourly: "1"
+      - Every 2 Hours: "2"
+      - Every 3 Hours: "3"
+      - Daily: daily
+    help_text: Choose 'Hourly' for immediate details or 'Daily' for the week ahead.
+    conditional_validation:
+      - when: "1"
+        hidden: [date_format]
+      - when: "2"
+        hidden: [date_format]
+      - when: "3"
+        hidden: [date_format]
+      - when: daily
+        hidden: [hourly_time_format]
+  - keyname: time_format
+    field_type: string
+    type: string
+    optional: true
+    name: Current Time Format
+    label: Current Time Format
+    placeholder: "%I:%M %p"
+    default: "%I:%M %p"
+    description: Custom format for the current time.
+    help_text: 'Use standard strftime codes. Test at <a href="https://strftime.net">strftime.net</a>.<br>Examples:<br>12-hour: %I:%M %p<br>24-hour: %H:%M'
+  - keyname: hourly_time_format
+    field_type: string
+    type: string
+    optional: true
+    name: Hourly Time Format
+    label: Hourly Time Format
+    placeholder: "%I %p"
+    default: "%I %p"
+    description: Custom format for column headers (hourly forecast).
+    help_text: 'Use standard strftime codes. Test at <a href="https://strftime.net">strftime.net</a>.<br>Examples:<br>12-hour: %I %p<br>24-hour: %H:00 or %Hh'
+  - keyname: date_format
+    field_type: string
+    type: string
+    optional: true
+    name: Date Format
+    label: Date Format
+    placeholder: "%a %d"
+    default: "%a %d"
+    description: Custom format for column headers (daily forecast).
+    help_text: 'Use standard strftime codes. Test at <a href="https://strftime.net">strftime.net</a>.'
+  - keyname: pill_count_override
+    field_type: select
+    type: string
+    name: Bar Count
+    label: Bar Count
+    description: Total number of bars to display.
+    options:
+      - Automatic: automatic
+      - 3: "3"
+      - 4: "4"
+      - 5: "5"
+      - 6: "6"
+      - 7: "7"
+    default: automatic
+    help_text: Tweak this number to fit the bars perfectly on your screen width.
+  - keyname: hide_title_bar
+    field_type: select
+    type: string
+    name: Hide title bar
+    label: Hide title bar
+    description: Remove the title for a cleaner look.
+    options:
+      - "Yes": "yes"
+      - "No": "no"
+    default: "no"
+    conditional_validation:
+      - when: "yes"
+        hidden: [location_name]
+  - keyname: location_name
+    field_type: string
+    type: string
+    optional: true
+    name: Location Label
+    label: Location Label
+    placeholder: e.g. Home
+    description: A custom label to indicate your location (e.g., Home, Office).
+    help_text: Displayed on the right side of the title bar.
