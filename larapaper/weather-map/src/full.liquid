@@ -1,7 +1,9 @@
 {% assign custom_fields = trmnl.plugin_settings.custom_fields_values %}
 {% assign map_url = custom_fields.image_url | default: config.image_url | default: image_url | default: "https://radar.weather.gov/ridge/standard/CONUS_0.gif" %}
-{% assign map_scale = custom_fields.image_scale | default: config.image_scale | default: image_scale | default: "1.12" %}
-{% assign map_position = custom_fields.image_position | default: config.image_position | default: image_position | default: "center top" %}
+{% assign map_scale = custom_fields.image_scale | default: config.image_scale | default: image_scale | default: "1" %}
+{% assign map_position = custom_fields.image_position | default: config.image_position | default: image_position | default: "center center" %}
+{% assign map_filter = custom_fields.image_filter | default: config.image_filter | default: image_filter | default: "grayscale(1) contrast(2.8) brightness(0.85)" %}
+{% assign map_rendering = custom_fields.image_rendering | default: config.image_rendering | default: image_rendering | default: "pixelated" %}
 {% assign cache_bust = "now" | date: "%s" %}
 {% assign cache_separator = "?" %}
 {% if map_url contains "?" %}
@@ -22,7 +24,8 @@
     height: 100%;
     object-fit: cover;
     object-position: {{ map_position }};
-    filter: grayscale(1) contrast(1.15);
+    filter: {{ map_filter }};
+    image-rendering: {{ map_rendering }};
     transform: scale({{ map_scale }});
     transform-origin: {{ map_position }};
   }

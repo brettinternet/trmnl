@@ -5,7 +5,7 @@ refresh_interval: 15
 no_screen_padding: "yes"
 dark_mode: "no"
 framework_version: latest
-static_data: '{}'
+static_data: "{}"
 custom_fields:
   - keyname: image_url
     field_type: string
@@ -20,14 +20,30 @@ custom_fields:
     type: string
     name: Image scale
     label: Image scale
-    description: CSS scale value used to crop legends or borders.
-    placeholder: "1.12"
-    default: "1.12"
+    description: CSS scale value. Keep at 1 on memory-limited devices; scaling increases PNG entropy and file size.
+    placeholder: "1"
+    default: "1"
   - keyname: image_position
     field_type: string
     type: string
     name: Image position
     label: Image position
     description: CSS object-position and transform-origin.
-    placeholder: center top
-    default: center top
+    placeholder: center center
+    default: center center
+  - keyname: image_filter
+    field_type: string
+    type: string
+    name: Image filter
+    label: Image filter
+    description: CSS filter used before LaraPaper snapshots the image. Lower brightness darkens the E1003 output; higher contrast helps keep the generated PNG small.
+    placeholder: grayscale(1) contrast(2.8) brightness(0.85)
+    default: grayscale(1) contrast(2.8) brightness(0.85)
+  - keyname: image_rendering
+    field_type: string
+    type: string
+    name: Image rendering
+    label: Image rendering
+    description: CSS image-rendering mode. Pixelated avoids interpolation gradients that inflate PNG size.
+    placeholder: pixelated
+    default: pixelated
