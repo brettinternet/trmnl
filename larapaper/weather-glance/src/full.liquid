@@ -130,45 +130,20 @@
 
   .wxg__current {
     align-self: center;
-    margin-bottom: 32px;
+    justify-self: center;
+    margin-bottom: 0;
+    text-align: center;
   }
 
-  .wxg__time {
-    font-size: 16px;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 5px;
-  }
-
-  .wxg__current-row {
-    align-items: center;
-    display: flex;
-    gap: 14px;
-  }
 
   .wxg__temp {
     font-size: 76px;
     font-weight: 400;
     letter-spacing: -0.08em;
     line-height: 0.88;
+    text-align: center;
   }
 
-  .wxg__rule {
-    background: var(--wxg-ink);
-    height: 2px;
-    position: relative;
-    width: 68px;
-  }
-
-  .wxg__rule::after {
-    border-bottom: 8px solid var(--wxg-ink);
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    content: "";
-    position: absolute;
-    right: 0;
-    top: -11px;
-  }
 
   .wxg__forecast {
     align-items: start;
@@ -351,17 +326,8 @@
 <div class="wxg">
   {% if has_weather %}
     <div class="wxg__content">
-      {% assign current_time_label = data.current.time | date: current_time_format %}
-      {% assign current_time_first = current_time_label | slice: 0, 1 %}
-      {% if current_time_first == "0" %}
-        {% assign current_time_label = current_time_label | slice: 1, 99 %}
-      {% endif %}
       <section class="wxg__current" aria-label="{{ current_condition }}">
-        <div class="wxg__time">{{ current_time_label }}</div>
-        <div class="wxg__current-row">
-          <div class="wxg__temp">{{ current_temp }}{{ degree_symbol }}</div>
-          <div class="wxg__rule"></div>
-        </div>
+        <div class="wxg__temp">{{ current_temp }}{{ degree_symbol }}</div>
       </section>
 
       <section class="wxg__forecast">
