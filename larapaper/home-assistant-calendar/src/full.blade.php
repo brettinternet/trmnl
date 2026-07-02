@@ -109,12 +109,12 @@
 
         <div class="flex flex--row w--full value--small lg:value flex--left flex--center-y p--1 mb--3">
             <div>{{ $today->format('F') }}</div>
-            <div class="text--gray-40" style="margin-left: 8px;">{{ $today->format('Y') }}</div>
+            <div class="text--gray-10" style="margin-left: 8px;">{{ $today->format('Y') }}</div>
         </div>
 
         <div class="grid grid--cols-7 gap--1 w--full mb--1">
             @foreach($dayNamesShort as $dayLabel)
-                <div class="col--span-1 text--center text--gray-30 flex flex--row flex--center-x lg:value--xxsmall">
+                <div class="col--span-1 text--center text--gray-10 flex flex--row flex--center-x lg:value--xxsmall">
                     {{ $dayLabel }}
                 </div>
             @endforeach
@@ -123,13 +123,13 @@
         <div class="grid grid--cols-7 gap--2 w--full border--h-6 pb--4">
             @foreach($days as $day)
                 <div class="col--span-1 flex flex--col">
-                    <div class="rounded--full text--center aspect--1/1 h--14 lg:h--22 @if($day['is_today']) bg--black text--white @elseif($day['is_past']) text--gray-40 @endif">
+                    <div class="rounded--full text--center aspect--1/1 h--14 lg:h--22 @if($day['is_today']) bg--black text--white @elseif($day['is_past']) text--gray-20 @endif">
                         <div class="value--small lg:value lg:pt--4 pt--3 pb--0.5">{{ $day['day_num'] }}</div>
 
                         @if($day['event_count'] > 0)
                             <div class="flex flex--row flex--center-x gap--xsmall">
                                 @for($i = 0; $i < $day['event_count']; $i++)
-                                    <div class="w--1 h--1 rounded--full @if($day['is_today']) bg--white @else bg--gray-30 @endif"></div>
+                                    <div class="w--1 h--1 rounded--full @if($day['is_today']) bg--white @else bg--gray-10 @endif"></div>
                                 @endfor
                             </div>
                         @endif
@@ -169,15 +169,15 @@
                                 </div>
                             @else
                                 <div class="px--1 py--2 border--h-6 agenda-item value--xxsmall lg:value--xsmall rounded--xsmall w--full mb--1">
-                                    <div class="text--gray-30 label--small">
+                                    <div class="text--gray-10 label--small">
                                         {{ $formatTime($event['start']) }} &mdash; {{ $formatTime($event['end']) }}
                                     </div>
                                     {{ $event['summary'] }}
 
                                     @if(!empty($event['description']))
-                                        <div class="label--small text--gray-30">{{ $event['description'] }}</div>
+                                        <div class="label--small text--gray-10">{{ $event['description'] }}</div>
                                     @elseif(!empty($event['location']))
-                                        <div class="label--small text--gray-30">{{ Str::limit(str_replace(["\r", "\n"], ' ', $event['location']), 44) }}</div>
+                                        <div class="label--small text--gray-10">{{ Str::limit(str_replace(["\r", "\n"], ' ', $event['location']), 44) }}</div>
                                     @endif
                                 </div>
                             @endif
