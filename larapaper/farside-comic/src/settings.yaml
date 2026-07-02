@@ -10,14 +10,6 @@ no_screen_padding: "yes"
 dark_mode: "no"
 framework_version: 2.0
 custom_fields:
-  - keyname: comic_position
-    field_type: string
-    type: string
-    name: Comic position
-    label: Comic position
-    description: 1 selects the newest feed item; increase to show older items from the feed.
-    placeholder: "1"
-    default: "1"
   - keyname: show_caption
     field_type: string
     type: string

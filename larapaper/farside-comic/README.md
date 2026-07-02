@@ -2,7 +2,7 @@
 
 Import this directory as a LaraPaper recipe plugin archive.
 
-Renders one comic from the unofficial ComicCaster Far Side daily RSS feed, including the proxied comic image and optional caption.
+Renders a random comic from the unofficial ComicCaster Far Side daily RSS feed, including the proxied comic image and optional caption.
 
 ## Files
 
@@ -13,7 +13,6 @@ Renders one comic from the unofficial ComicCaster Far Side daily RSS feed, inclu
 
 Optional fields after import:
 
-- `comic_position`: 1 selects the newest RSS item; higher numbers select older items still present in the feed.
 - `show_caption`: `yes` shows the caption below the comic; `no` hides it.
 
 The plugin polls `https://comiccaster.xyz/feeds/farside-daily.xml` every 6 hours.

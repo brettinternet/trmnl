@@ -1,8 +1,4 @@
 {% assign custom_fields = trmnl.plugin_settings.custom_fields_values %}
-{% assign comic_position = custom_fields.comic_position | default: config.comic_position | default: "1" | plus: 0 %}
-{% if comic_position < 1 %}
-  {% assign comic_position = 1 %}
-{% endif %}
 {% assign show_caption_value = custom_fields.show_caption | default: config.show_caption | default: "yes" | downcase %}
 {% assign show_caption = true %}
 {% if show_caption_value == "no" or show_caption_value == "false" or show_caption_value == "0" %}
@@ -10,12 +6,7 @@
 {% endif %}
 
 {% assign items = rss.channel.item | default: data.rss.channel.item %}
-{% assign selected_item = items.last | default: items.first %}
-{% for item in items %}
-  {% if forloop.index == comic_position %}
-    {% assign selected_item = item %}
-  {% endif %}
-{% endfor %}
+{% assign selected_item = items | sample | default: items.first %}
 
 {% assign title = selected_item.title | default: "The Far Side" %}
 {% assign link = selected_item.link | default: "https://www.thefarside.com/" %}
