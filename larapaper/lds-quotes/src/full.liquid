@@ -1,0 +1,227 @@
+{% assign custom_fields = trmnl.plugin_settings.custom_fields_values %}
+{% assign show_title_bar_value = custom_fields.show_title_bar | default: config.show_title_bar | default: "yes" | downcase %}
+{% assign show_title_bar = true %}
+{% if show_title_bar_value == "no" or show_title_bar_value == "false" or show_title_bar_value == "0" %}
+  {% assign show_title_bar = false %}
+{% endif %}
+
+{% assign payload = data.data | default: data | default: IDX_1 | default: IDX_0 %}
+{% assign quote = payload.quote | default: IDX_1.quote | default: IDX_0.quote | default: "Quote unavailable" | strip %}
+{% assign author = payload.author | default: IDX_1.author | default: IDX_0.author | default: "Gospel Quotes" | strip %}
+{% assign category = payload.category | default: IDX_1.category | default: IDX_0.category | default: "inspiration" | strip %}
+{% assign quote_length = quote | size %}
+{% assign quote_size_class = "lds-quotes__quote--long" %}
+{% if quote_length <= 180 %}
+  {% assign quote_size_class = "lds-quotes__quote--short" %}
+{% elsif quote_length <= 420 %}
+  {% assign quote_size_class = "lds-quotes__quote--medium" %}
+{% elsif quote_length <= 900 %}
+  {% assign quote_size_class = "lds-quotes__quote--long" %}
+{% elsif quote_length <= 1200 %}
+  {% assign quote_size_class = "lds-quotes__quote--xlong" %}
+{% else %}
+  {% assign quote_size_class = "lds-quotes__quote--max" %}
+{% endif %}
+
+<div class="view view--{{ size | default: 'full' }} lds-quotes{% unless show_title_bar %} lds-quotes--no-title{% endunless %}">
+<style>
+  .lds-quotes {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .lds-quotes__content {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    min-height: 0;
+    overflow: hidden;
+    padding: 22px 34px 46px;
+    text-align: center;
+    width: 100%;
+  }
+
+  .lds-quotes--no-title .lds-quotes__content {
+    padding-bottom: 22px;
+  }
+
+  .lds-quotes__quote {
+    flex: 0 1 auto;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    max-height: calc(100% - 44px);
+    overflow: hidden;
+  }
+
+  .lds-quotes__quote--short {
+    font-size: 48px;
+    max-width: 90%;
+  }
+
+  .lds-quotes__quote--medium {
+    font-size: 38px;
+    max-width: 94%;
+  }
+
+  .lds-quotes__quote--long {
+    font-size: 26px;
+    max-width: 96%;
+  }
+
+  .lds-quotes__quote--xlong {
+    font-size: 19px;
+    line-height: 1.03;
+    max-width: 98%;
+  }
+
+  .lds-quotes__quote--max {
+    font-size: 16px;
+    line-height: 1.02;
+    max-width: 99%;
+  }
+
+  .lds-quotes__author {
+    color: #000000;
+    flex: 0 0 auto;
+    font-size: 22px;
+    font-style: italic;
+    font-weight: 500;
+    line-height: 1.1;
+    margin-top: 18px;
+    max-width: 88%;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lds-quotes__author::before {
+    content: "— ";
+  }
+
+  .lds-quotes__category {
+    text-transform: capitalize;
+  }
+
+  .screen--lg .lds-quotes__content {
+    padding: 28px 46px 50px;
+  }
+
+  .screen--lg .lds-quotes--no-title .lds-quotes__content {
+    padding-bottom: 28px;
+  }
+
+  .screen--lg .lds-quotes__quote--short {
+    font-size: 58px;
+  }
+
+  .screen--lg .lds-quotes__quote--medium {
+    font-size: 46px;
+  }
+
+  .screen--lg .lds-quotes__quote--long {
+    font-size: 30px;
+  }
+
+  .screen--lg .lds-quotes__quote--xlong {
+    font-size: 21px;
+  }
+
+  .screen--lg .lds-quotes__quote--max {
+    font-size: 18px;
+  }
+
+  .screen--portrait .lds-quotes__content {
+    padding: 18px 18px 46px;
+  }
+
+  .screen--portrait .lds-quotes--no-title .lds-quotes__content {
+    padding-bottom: 18px;
+  }
+
+  .screen--portrait .lds-quotes__quote--short {
+    font-size: 40px;
+  }
+
+  .screen--portrait .lds-quotes__quote--medium {
+    font-size: 32px;
+  }
+
+  .screen--portrait .lds-quotes__quote--long {
+    font-size: 22px;
+  }
+
+  .screen--portrait .lds-quotes__quote--xlong {
+    font-size: 18px;
+  }
+
+  .screen--portrait .lds-quotes__quote--max {
+    font-size: 16px;
+  }
+
+  .screen--portrait .lds-quotes__author {
+    font-size: 18px;
+    max-width: 96%;
+  }
+
+  @media (min-height: 900px) {
+    .lds-quotes__content {
+      padding: 64px 96px 86px;
+    }
+
+    .lds-quotes--no-title .lds-quotes__content {
+      padding-bottom: 64px;
+    }
+
+    .lds-quotes__quote {
+      max-height: calc(100% - 78px);
+    }
+
+    .lds-quotes__quote--short {
+      font-size: clamp(56px, 5vh, 78px);
+    }
+
+    .lds-quotes__quote--medium {
+      font-size: clamp(44px, 4vh, 62px);
+    }
+
+    .lds-quotes__quote--long {
+      font-size: clamp(30px, 2.6vh, 40px);
+    }
+
+    .lds-quotes__quote--xlong {
+      font-size: clamp(26px, 2.3vh, 34px);
+    }
+
+    .lds-quotes__quote--max {
+      font-size: clamp(20px, 1.8vh, 28px);
+    }
+
+    .lds-quotes__author {
+      font-size: clamp(24px, 2vh, 32px);
+      margin-top: 24px;
+      max-width: 92%;
+    }
+  }
+</style>
+
+  <div class="lds-quotes__content">
+    <div class="lds-quotes__quote {{ quote_size_class }}" data-value-fit="true" data-value-fit-max-height="1000">
+      {{ quote }}
+    </div>
+    <div class="lds-quotes__author">
+      {{ author }}
+    </div>
+  </div>
+
+  {% if show_title_bar %}
+    <div class="title_bar">
+      <span class="title">LDS Quotes</span>
+      <span class="instance lds-quotes__category">Category: {{ category }}</span>
+    </div>
+  {% endif %}
+</div>
