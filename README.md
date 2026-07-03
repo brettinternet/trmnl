@@ -18,6 +18,7 @@ Copy `example.env` to `.env` when needed.
 | `larapaper/weather-map`         | Render any public map image URL.                       |
 | `larapaper/xkcd-comic`          | Render the latest XKCD comic.                          |
 | `larapaper/farside-comic`       | Render one comic from the Far Side daily RSS feed.     |
+| `larapaper/lds-quotes`          | Render a random quote from Gospel Quotes.              |
 | `larapaper/github-commit-graph` | Render GitHub contribution data from GraphQL.          |
 | `larapaper/days-left-this-year` | Stoic-calendar grid of days passed and left this year. |
 
