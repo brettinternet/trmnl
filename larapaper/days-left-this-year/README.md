@@ -3,7 +3,7 @@
 Import this directory as a LaraPaper recipe plugin archive.
 
 A Stoic-calendar style view of the current year: one cell per day, filled for
-days already passed and faint for days still ahead. Today's cell is outlined.
+days already passed, shaded for days still ahead, and mid-gray for today.
 
 ## Files
 

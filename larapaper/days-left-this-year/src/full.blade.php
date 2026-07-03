@@ -46,15 +46,11 @@
 
     .year-grid__day--past { background: #000000; }
 
-    .year-grid__day--today {
-        background: #000000;
-        outline: 2px solid #000000;
-        outline-offset: 1px;
-    }
+    .year-grid__day--today { background: #8f8f8f; }
 
     .year-grid__day--future {
-        background: #ffffff;
-        box-shadow: inset 0 0 0 1px #c4c4c4;
+        background: #d8d8d8;
+        box-shadow: inset 0 0 0 1px #9a9a9a;
     }
 </style>
 
