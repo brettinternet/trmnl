@@ -2,6 +2,8 @@
     $custom_fields = data_get($trmnl ?? null, 'plugin_settings.custom_fields_values', []);
     $show_caption_value = strtolower((string) (data_get($custom_fields, 'show_caption') ?? data_get($config ?? [], 'show_caption') ?? 'yes'));
     $show_caption = ! in_array($show_caption_value, ['no', 'false', '0'], true);
+    $image_color_mode_value = strtolower((string) (data_get($custom_fields, 'image_color_mode') ?? data_get($config ?? [], 'image_color_mode') ?? 'grayscale'));
+    $image_filter = in_array($image_color_mode_value, ['original', 'color'], true) ? 'none' : 'grayscale(1) contrast(1.08)';
 
     $items = data_get($rss ?? null, 'channel.item')
         ?? data_get($data ?? [], 'rss.channel.item')
@@ -78,7 +80,7 @@
 
     .farside-screen__image {
         display: block;
-        filter: grayscale(1) contrast(1.08);
+        filter: <?= e($image_filter) ?>;
         max-height: 100%;
         max-width: 100%;
         object-fit: contain;

@@ -18,3 +18,13 @@ custom_fields:
     description: Use yes to show the Far Side caption under the comic, or no to hide it.
     placeholder: "yes"
     default: "yes"
+  - keyname: image_color_mode
+    field_type: select
+    type: string
+    name: Image color
+    label: Image color
+    description: Keep grayscale for black-and-white devices, or pass through the original comic colors for color-capable devices.
+    default: grayscale
+    options:
+      - Grayscale: grayscale
+      - Original color: original
