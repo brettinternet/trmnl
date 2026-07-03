@@ -46,15 +46,25 @@
 
     .year-grid__day--past { background: #000000; }
 
-    .year-grid__day--today { background: #8f8f8f; }
+    .year-grid__day--today { background: #707070; }
 
     .year-grid__day--future {
         background: #d8d8d8;
         box-shadow: inset 0 0 0 1px #9a9a9a;
     }
+
+    .days-left-this-year .title_bar {
+        background: transparent;
+    }
+
+    .days-left-this-year .title_bar .title,
+    .days-left-this-year .title_bar .instance {
+        background: transparent;
+        color: #333333;
+    }
 </style>
 
-<div class="view view--full">
+<div class="view view--full days-left-this-year">
     <div class="layout layout--col gap--space-between">
         <div class="grid grid--cols-2 w--full">
             <div class="flex flex--col flex--center-x text--center">
@@ -77,6 +87,6 @@
 
     <div class="title_bar">
         <span class="title">{{ $year }}</span>
-        <span class="instance">{{ $percentComplete }}% complete</span>
+        <span class="instance">{{ $percentComplete }}%</span>
     </div>
 </div>
