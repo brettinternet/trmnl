@@ -52,7 +52,7 @@
 
     $shadeFor = function (int $count): string {
         return match (true) {
-            $count === 0 => 'github-graph__day--0',
+            $count === 0 => 'github-graph__day--empty',
             $count === 1 => 'github-graph__day--1',
             $count === 2 => 'github-graph__day--2',
             $count === 3 => 'github-graph__day--3',
@@ -82,9 +82,10 @@
     .github-graph__day {
         aspect-ratio: 1;
         border-radius: 1px;
+        box-sizing: border-box;
     }
 
-    .github-graph__day--0 { background: #f1f1f1; }
+    .github-graph__day--empty { background: transparent; border: 1px solid #b5b5b5; }
     .github-graph__day--1 { background: #d8d8d8; }
     .github-graph__day--2 { background: #cccccc; }
     .github-graph__day--3 { background: #c0c0c0; }
