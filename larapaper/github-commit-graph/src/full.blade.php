@@ -45,7 +45,7 @@
     }
 
     $averageContributions = count($days) > 0
-        ? number_format($totalContributionsFromDays / count($days), 2)
+        ? number_format($totalContributionsFromDays / count($days), 2, '.', '')
         : '0.00';
 
     $totalContributions = (int) ($calendar['totalContributions'] ?? $totalContributionsFromDays);
@@ -123,7 +123,7 @@
                 <div class="item">
                     <div class="meta"></div>
                     <div class="content">
-                        <span class="value value--tnums value--xxxlarge">{{ number_format($totalContributions) }}</span>
+                        <span class="value value--tnums value--xxxlarge">{{ $totalContributions }}</span>
                         <span class="label">Contributions in last year</span>
                     </div>
                 </div>
