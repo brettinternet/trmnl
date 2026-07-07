@@ -53,6 +53,7 @@
     }
 
     $has_image = $selected_item !== [] && $image_url !== '';
+    $has_caption = $has_image && $show_caption && $caption !== '';
     $instance_text = $published_label ?: $link;
 ?>
 
@@ -63,10 +64,17 @@
         color: #000000;
         display: flex;
         flex-direction: column;
+        gap: 14px;
         height: 100%;
         overflow: hidden;
-        padding: 12px 16px 8px;
+        padding: 12px 16px;
         width: 100%;
+    }
+
+    .farside-screen--with-caption {
+        align-items: stretch;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 
     .farside-screen__image-wrap {
@@ -75,7 +83,11 @@
         flex: 1 1 auto;
         justify-content: center;
         min-height: 0;
-        width: 100%;
+        min-width: 0;
+    }
+
+    .farside-screen--with-caption .farside-screen__image-wrap {
+        height: 100%;
     }
 
     .farside-screen__image {
@@ -87,14 +99,45 @@
     }
 
     .farside-screen__caption {
-        flex: 0 0 auto;
-        font-size: 16px;
+        align-items: center;
+        display: flex;
+        font-size: 20px;
         font-style: italic;
-        line-height: 1.15;
-        margin-top: 4px;
-        max-height: 58px;
+        justify-content: flex-start;
+        line-height: 1.2;
+        min-height: 0;
+        min-width: 0;
         overflow: hidden;
-        text-align: center;
+        text-align: left;
+    }
+
+    .farside-screen__caption-text {
+        display: -webkit-box;
+        max-height: 100%;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 16;
+    }
+
+    @media (max-width: 520px) {
+        .farside-screen--with-caption {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .farside-screen--with-caption .farside-screen__image-wrap {
+            height: auto;
+        }
+
+        .farside-screen__caption {
+            font-size: 16px;
+            max-height: 72px;
+            text-align: center;
+        }
+
+        .farside-screen__caption-text {
+            -webkit-line-clamp: 3;
+        }
     }
 
     .farside-screen__error {
@@ -107,14 +150,14 @@
     }
 </style>
 
-<div class="farside-screen">
+<div class="farside-screen<?= $has_caption ? ' farside-screen--with-caption' : '' ?>">
     <?php if ($has_image): ?>
         <div class="farside-screen__image-wrap">
             <img class="farside-screen__image" src="<?= e($image_url) ?>" alt="">
         </div>
 
-        <?php if ($show_caption && $caption !== ''): ?>
-            <div class="farside-screen__caption"><?= e($caption) ?></div>
+        <?php if ($has_caption): ?>
+            <div class="farside-screen__caption"><span class="farside-screen__caption-text"><?= e($caption) ?></span></div>
         <?php endif; ?>
     <?php else: ?>
         <div class="farside-screen__error">

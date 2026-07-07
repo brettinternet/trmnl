@@ -13,7 +13,7 @@ Renders a random comic from the unofficial ComicCaster Far Side daily RSS feed, 
 
 Optional fields after import:
 
-- `show_caption`: `yes` shows the caption below the comic; `no` hides it.
+- `show_caption`: `yes` shows the caption in a right-side pane beside the comic; `no` hides it.
 - `image_color_mode`: `grayscale` keeps the current black-and-white rendering; `original` leaves color comics in color for color-capable devices.
 
 The plugin polls `https://comiccaster.xyz/feeds/farside-daily.xml` every 6 hours.

@@ -15,7 +15,7 @@ custom_fields:
     type: string
     name: Show caption
     label: Show caption
-    description: Use yes to show the Far Side caption under the comic, or no to hide it.
+    description: Use yes to show the Far Side caption in a right-side pane beside the comic, or no to hide it.
     placeholder: "yes"
     default: "yes"
   - keyname: image_color_mode
