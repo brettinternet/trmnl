@@ -1,0 +1,11 @@
+---
+name: Calvin and Hobbes Comic
+strategy: polling
+polling_verb: get
+polling_url: https://comiccaster.xyz/rss/calvinandhobbes
+polling_headers: |
+  Accept: application/rss+xml, application/xml;q=0.9, */*;q=0.8
+refresh_interval: 360
+no_screen_padding: "yes"
+dark_mode: "no"
+framework_version: 2.0
