@@ -84,9 +84,9 @@ Configuration acceptance also covers an empty required base failing, every empty
 
 **Last known evidence:** The local refinement contract records `Taskfile.dist.yaml`, `example.env`, `mise.toml`, `.gitignore`, and generated `.task` behavior; the Larapaper and Home Assistant pinned links above are the source evidence for downstream contracts. No bridge source exists yet.
 
-**Pending verification before done:** Run the configuration/state boundary and atomic-write tests, then perform the parent/file and permission manual checks described in Acceptance.
+**Pending verification before done:** Configuration parsing/validation is implemented and verified (commit `aef1ffd` on branch `ha-bridge-01`, `scripts/larapaper-bridge.ts` + `scripts/larapaper-bridge.test.ts`, 15/15 passing). Still pending: MAC identity canonicalization/generation, exact state union, and atomic `0600` persistence, plus their tests and the parent/file/permission manual checks described in Acceptance.
 
-**Next action:** Implement the parser, MAC identity, exact state union, and atomic `0600` persistence in the future bridge targets.
+**Next action:** Implement MAC identity (canonicalize/generate), the exact state union, and atomic `0600` persistence in the future bridge targets; the parser is done.
 
 ### HA-BRIDGE-02 — Larapaper client and crash-safe first-run provisioning
 
