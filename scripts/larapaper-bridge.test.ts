@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
 import {
   canonicalizeMac,
+  fetchDisplay,
   fetchSetup,
   generateMac,
   isCompleteState,
@@ -16,6 +17,7 @@ import {
   resolveMacAndState,
   saveState,
   type BridgeState,
+  type CompleteState,
   type Config,
   type FetchImpl,
 } from "./larapaper-bridge";
@@ -691,4 +693,141 @@ describe("provisionDeviceOnce", () => {
       ).rejects.toMatchObject({ code: "setup_auto_assign_disabled" });
     });
   });
+});
+
+describe("fetchDisplay", () => {
+  const completeState: CompleteState = {
+    version: 1,
+    mac: "AA:BB:CC:DD:EE:FF",
+    api_key: "api-key",
+    friendly_id: "friendly-id",
+  };
+
+  test("sends ID and Access-Token exactly once, no redirects, at the correct URL", async () => {
+    const calls: { url: string; init: RequestInit | undefined }[] = [];
+    const fetchImpl: FetchImpl = (async (url: string | URL, init?: RequestInit) => {
+      calls.push({ url: url.toString(), init });
+      return jsonResponse(200, { image_url: "https://example.test/img.png", refresh_rate: 120 });
+    }) as FetchImpl;
+
+    const result = await fetchDisplay(testConfig(), completeState, fetchImpl);
+    expect(result).toEqual({ imageUrl: "https://example.test/img.png", effectiveIntervalSeconds: 120 });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe("https://example.test/api/display");
+    expect(calls[0]?.init?.headers).toEqual({ ID: "AA:BB:CC:DD:EE:FF", "Access-Token": "api-key" });
+    expect(calls[0]?.init?.redirect).toBe("error");
+  });
+
+  test("preserves a configured base URL pathname prefix", async () => {
+    const calls: string[] = [];
+    const fetchImpl: FetchImpl = (async (url: string | URL) => {
+      calls.push(url.toString());
+      return jsonResponse(200, { image_url: null, refresh_rate: 60 });
+    }) as FetchImpl;
+
+    const config = testConfig({ baseUrl: "https://example.test/prefix/" });
+    await fetchDisplay(config, completeState, fetchImpl);
+    expect(calls[0]).toBe("https://example.test/prefix/api/display");
+  });
+
+  test("clamps effectiveIntervalSeconds to the configured minimum", async () => {
+    const fetchImpl: FetchImpl = (async () =>
+      jsonResponse(200, { image_url: "https://example.test/img.png", refresh_rate: 5 })) as FetchImpl;
+
+    const config = testConfig({ minPollSeconds: 60 });
+    const result = await fetchDisplay(config, completeState, fetchImpl);
+    expect(result.effectiveIntervalSeconds).toBe(60);
+  });
+
+  test("uses the server rate when it exceeds the configured minimum", async () => {
+    const fetchImpl: FetchImpl = (async () =>
+      jsonResponse(200, { image_url: "https://example.test/img.png", refresh_rate: 900 })) as FetchImpl;
+
+    const config = testConfig({ minPollSeconds: 60 });
+    const result = await fetchDisplay(config, completeState, fetchImpl);
+    expect(result.effectiveIntervalSeconds).toBe(900);
+  });
+
+  test("treats null or empty image_url as a valid result with no image error thrown", async () => {
+    const nullImage: FetchImpl = (async () =>
+      jsonResponse(200, { image_url: null, refresh_rate: 120 })) as FetchImpl;
+    await expect(fetchDisplay(testConfig(), completeState, nullImage)).resolves.toEqual({
+      imageUrl: null,
+      effectiveIntervalSeconds: 120,
+    });
+
+    const emptyImage: FetchImpl = (async () =>
+      jsonResponse(200, { image_url: "", refresh_rate: 120 })) as FetchImpl;
+    await expect(fetchDisplay(testConfig(), completeState, emptyImage)).resolves.toEqual({
+      imageUrl: null,
+      effectiveIntervalSeconds: 120,
+    });
+
+    const missingImage: FetchImpl = (async () =>
+      jsonResponse(200, { refresh_rate: 120 })) as FetchImpl;
+    await expect(fetchDisplay(testConfig(), completeState, missingImage)).resolves.toEqual({
+      imageUrl: null,
+      effectiveIntervalSeconds: 120,
+    });
+  });
+
+  test("rejects a missing, non-numeric, zero, negative, or non-finite refresh_rate", async () => {
+    for (const rate of [undefined, "120", 0, -1, Number.POSITIVE_INFINITY, Number.NaN]) {
+      const body: Record<string, unknown> = { image_url: "https://example.test/img.png" };
+      if (rate !== undefined) body.refresh_rate = rate;
+      const fetchImpl: FetchImpl = (async () => jsonResponse(200, body)) as FetchImpl;
+      await expect(fetchDisplay(testConfig(), completeState, fetchImpl)).rejects.toMatchObject({
+        code: "invalid_display_response",
+      });
+    }
+  });
+
+  test("rejects a non-string image_url", async () => {
+    const fetchImpl: FetchImpl = (async () =>
+      jsonResponse(200, { image_url: 42, refresh_rate: 120 })) as FetchImpl;
+    await expect(fetchDisplay(testConfig(), completeState, fetchImpl)).rejects.toMatchObject({
+      code: "invalid_display_response",
+    });
+  });
+
+  test("rejects a non-2xx response and non-JSON body as display_failed", async () => {
+    const badStatus: FetchImpl = (async () => jsonResponse(500, {})) as FetchImpl;
+    await expect(fetchDisplay(testConfig(), completeState, badStatus)).rejects.toMatchObject({
+      code: "display_failed",
+    });
+
+    const nonJson: FetchImpl = (async () => new Response("not json", { status: 200 })) as FetchImpl;
+    await expect(fetchDisplay(testConfig(), completeState, nonJson)).rejects.toMatchObject({
+      code: "display_failed",
+    });
+  });
+
+  test("has no fast retry: callers must schedule their own next attempt", async () => {
+    let calls = 0;
+    const fetchImpl: FetchImpl = (async () => {
+      calls += 1;
+      return jsonResponse(500, {});
+    }) as FetchImpl;
+
+    await expect(fetchDisplay(testConfig(), completeState, fetchImpl)).rejects.toBeInstanceOf(
+      LarapaperClientError,
+    );
+    expect(calls).toBe(1);
+  });
+
+  test("aborts after the 10-second timeout", async () => {
+    const fetchImpl: FetchImpl = (async (_url: string | URL, init?: RequestInit) => {
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          reject(new DOMException("aborted", "AbortError"));
+        });
+      });
+    }) as FetchImpl;
+
+    const start = Date.now();
+    await expect(fetchDisplay(testConfig(), completeState, fetchImpl)).rejects.toBeInstanceOf(
+      LarapaperClientError,
+    );
+    expect(Date.now() - start).toBeGreaterThanOrEqual(9_000);
+  }, 15_000);
 });

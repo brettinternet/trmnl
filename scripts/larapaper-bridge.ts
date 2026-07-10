@@ -393,7 +393,11 @@ export function parseConfig(
   };
 }
 
-export type LarapaperClientErrorCode = "setup_auto_assign_disabled" | "setup_failed";
+export type LarapaperClientErrorCode =
+  | "setup_auto_assign_disabled"
+  | "setup_failed"
+  | "display_failed"
+  | "invalid_display_response";
 
 export class LarapaperClientError extends Error {
   readonly code: LarapaperClientErrorCode;
@@ -514,4 +518,101 @@ export async function provisionDeviceOnce(
   const complete: CompleteState = { version: 1, mac, ...credentials };
   await saveState(config.stateFile, complete);
   return complete;
+}
+
+const DISPLAY_TIMEOUT_MS = 10_000;
+
+/**
+ * A successful display result. `imageUrl` is `null` when Larapaper returned
+ * a null/empty `image_url`; callers record an image error but still use
+ * `effectiveIntervalSeconds` to schedule the next cycle without fetching or
+ * retrying an image.
+ */
+export type DisplayResult = {
+  imageUrl: string | null;
+  effectiveIntervalSeconds: number;
+};
+
+/**
+ * Performs exactly one GET /api/display attempt with `ID` and
+ * `Access-Token` headers sent exactly once. A finite, positive
+ * `refresh_rate` is required; any other rate (missing, non-numeric,
+ * non-finite, zero, or negative) rejects the entire result with
+ * `invalid_display_response`. `effectiveIntervalSeconds` is
+ * `max(refresh_rate, config.minPollSeconds)`. Callers own retry/backoff
+ * scheduling; a display failure has no fast retry.
+ */
+export async function fetchDisplay(
+  config: Config,
+  state: CompleteState,
+  fetchImpl: FetchImpl = fetch,
+): Promise<DisplayResult> {
+  const url = new URL("api/display", config.baseUrl);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DISPLAY_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetchImpl(url, {
+      method: "GET",
+      headers: { ID: state.mac, "Access-Token": state.api_key },
+      redirect: "error",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    throw new LarapaperClientError(
+      "display_failed",
+      `Larapaper display request failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (response.status < 200 || response.status >= 300) {
+    throw new LarapaperClientError(
+      "display_failed",
+      `Larapaper display returned unexpected status ${response.status}`,
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new LarapaperClientError("display_failed", "Larapaper display response was not valid JSON");
+  }
+
+  if (!isRecord(body)) {
+    throw new LarapaperClientError(
+      "invalid_display_response",
+      "Larapaper display response was not a JSON object",
+    );
+  }
+
+  const rate = body.refresh_rate;
+  if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) {
+    throw new LarapaperClientError(
+      "invalid_display_response",
+      "Larapaper display response had a missing or invalid refresh_rate",
+    );
+  }
+
+  const rawImageUrl = body.image_url;
+  if (
+    rawImageUrl !== null &&
+    rawImageUrl !== undefined &&
+    typeof rawImageUrl !== "string"
+  ) {
+    throw new LarapaperClientError(
+      "invalid_display_response",
+      "Larapaper display response had a non-string image_url",
+    );
+  }
+
+  const imageUrl = isNonEmptyString(rawImageUrl) ? rawImageUrl : null;
+
+  return {
+    imageUrl,
+    effectiveIntervalSeconds: Math.max(rate, config.minPollSeconds),
+  };
 }
