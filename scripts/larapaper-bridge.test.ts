@@ -13,6 +13,7 @@ import {
   nextSetupRetryDelayMs,
   parseConfig,
   provisionDeviceOnce,
+  provisionDeviceWithRetry,
   resolveDeviceMac,
   resolveMacAndState,
   saveState,
@@ -550,6 +551,7 @@ describe("fetchSetup", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe("https://example.test/api/setup");
     expect(calls[0]?.init?.headers).toEqual({ ID: "AA:BB:CC:DD:EE:FF" });
+    expect(calls[0]?.init?.method).toBe("GET");
     expect(calls[0]?.init?.redirect).toBe("error");
   });
 
@@ -558,6 +560,9 @@ describe("fetchSetup", () => {
     await expect(fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", fetchImpl)).rejects.toMatchObject({
       code: "setup_auto_assign_disabled",
     });
+    await expect(fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", fetchImpl)).rejects.toThrow(
+      /assign_new_devices/,
+    );
   });
 
   test("rejects a non-2xx response, missing credentials, and non-JSON bodies", async () => {
@@ -594,6 +599,34 @@ describe("fetchSetup", () => {
     );
     expect(Date.now() - start).toBeGreaterThanOrEqual(9_000);
   }, 15_000);
+
+  test("does not leak underlying error details in the thrown message", async () => {
+    const fetchImpl: FetchImpl = (async () => {
+      throw new Error("connect failed Access-Token=SECRET_TOKEN body=SECRET_BODY");
+    }) as FetchImpl;
+
+    await expect(fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", fetchImpl)).rejects.not.toThrow(
+      /SECRET_TOKEN|SECRET_BODY/,
+    );
+  });
+
+  test("aborts a hanging response body within the 10-second timeout", async () => {
+    const fetchImpl: FetchImpl = (async (_url: string | URL, init?: RequestInit) => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          init?.signal?.addEventListener("abort", () => controller.error(new Error("aborted")));
+        },
+      });
+      return new Response(body, { status: 200, headers: { "Content-Type": "application/json" } });
+    }) as FetchImpl;
+
+    const start = Date.now();
+    await expect(fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", fetchImpl)).rejects.toBeInstanceOf(
+      LarapaperClientError,
+    );
+    expect(Date.now() - start).toBeGreaterThanOrEqual(9_000);
+    expect(Date.now() - start).toBeLessThan(15_000);
+  }, 20_000);
 });
 
 describe("nextSetupRetryDelayMs", () => {
@@ -691,6 +724,23 @@ describe("provisionDeviceOnce", () => {
       await expect(
         provisionDeviceOnce(config, "AA:BB:CC:DD:EE:FF", undefined, notFound),
       ).rejects.toMatchObject({ code: "setup_auto_assign_disabled" });
+      await expect(
+        provisionDeviceOnce(config, "AA:BB:CC:DD:EE:FF", undefined, notFound),
+      ).rejects.toThrow(/assign_new_devices/);
+    });
+  });
+
+  test("rejects a stale existingState whose MAC does not match the requested MAC", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const config = testConfig({ stateFile: stateFilePath });
+      const stale: BridgeState = { version: 1, mac: "11:22:33:44:55:66" };
+      const fetchImpl: FetchImpl = (async () =>
+        jsonResponse(200, { api_key: "api-key", friendly_id: "friendly-id" })) as FetchImpl;
+
+      await expect(
+        provisionDeviceOnce(config, "AA:BB:CC:DD:EE:FF", stale, fetchImpl),
+      ).rejects.toThrow(/does not match/);
     });
   });
 });
@@ -715,6 +765,7 @@ describe("fetchDisplay", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe("https://example.test/api/display");
     expect(calls[0]?.init?.headers).toEqual({ ID: "AA:BB:CC:DD:EE:FF", "Access-Token": "api-key" });
+    expect(calls[0]?.init?.method).toBe("GET");
     expect(calls[0]?.init?.redirect).toBe("error");
   });
 
@@ -830,4 +881,133 @@ describe("fetchDisplay", () => {
     );
     expect(Date.now() - start).toBeGreaterThanOrEqual(9_000);
   }, 15_000);
+
+  test("does not leak underlying error details in the thrown message", async () => {
+    const fetchImpl: FetchImpl = (async () => {
+      throw new Error("connect failed Access-Token=SECRET_TOKEN body=SECRET_BODY");
+    }) as FetchImpl;
+
+    await expect(fetchDisplay(testConfig(), completeState, fetchImpl)).rejects.not.toThrow(
+      /SECRET_TOKEN|SECRET_BODY/,
+    );
+  });
+
+  test("aborts a hanging response body within the 10-second timeout", async () => {
+    const fetchImpl: FetchImpl = (async (_url: string | URL, init?: RequestInit) => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          init?.signal?.addEventListener("abort", () => controller.error(new Error("aborted")));
+        },
+      });
+      return new Response(body, { status: 200, headers: { "Content-Type": "application/json" } });
+    }) as FetchImpl;
+
+    const start = Date.now();
+    await expect(fetchDisplay(testConfig(), completeState, fetchImpl)).rejects.toBeInstanceOf(
+      LarapaperClientError,
+    );
+    expect(Date.now() - start).toBeGreaterThanOrEqual(9_000);
+    expect(Date.now() - start).toBeLessThan(15_000);
+  }, 20_000);
+});
+
+describe("provisionDeviceWithRetry", () => {
+  test("retries setup failures at +5, +10, +20, +40, then +60 seconds using injected sleep", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const config = testConfig({ stateFile: stateFilePath });
+      const mac = "AA:BB:CC:DD:EE:FF";
+
+      let calls = 0;
+      const fetchImpl: FetchImpl = (async () => {
+        calls += 1;
+        if (calls <= 6) return jsonResponse(500, {});
+        return jsonResponse(200, { api_key: "api-key", friendly_id: "friendly-id" });
+      }) as FetchImpl;
+
+      const delays: number[] = [];
+      const sleep = async (ms: number) => {
+        delays.push(ms);
+      };
+
+      const complete = await provisionDeviceWithRetry(config, mac, undefined, fetchImpl, sleep);
+      expect(complete).toEqual({ version: 1, mac, api_key: "api-key", friendly_id: "friendly-id" });
+      expect(calls).toBe(7);
+      expect(delays).toEqual([5_000, 10_000, 20_000, 40_000, 60_000, 60_000]);
+    });
+  });
+
+  test("retries an actionable setup 404 rather than propagating it immediately", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const config = testConfig({ stateFile: stateFilePath });
+      const mac = "AA:BB:CC:DD:EE:FF";
+
+      let calls = 0;
+      const fetchImpl: FetchImpl = (async () => {
+        calls += 1;
+        if (calls === 1) return jsonResponse(404, {});
+        return jsonResponse(200, { api_key: "api-key", friendly_id: "friendly-id" });
+      }) as FetchImpl;
+
+      const delays: number[] = [];
+      const complete = await provisionDeviceWithRetry(config, mac, undefined, fetchImpl, async (ms) => {
+        delays.push(ms);
+      });
+      expect(complete).toEqual({ version: 1, mac, api_key: "api-key", friendly_id: "friendly-id" });
+      expect(calls).toBe(2);
+      expect(delays).toEqual([5_000]);
+    });
+  });
+
+  test("preserves the same MAC in pending state across retries and reuses complete state without retrying", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const config = testConfig({ stateFile: stateFilePath });
+      const mac = "AA:BB:CC:DD:EE:FF";
+
+      let calls = 0;
+      const fetchImpl: FetchImpl = (async () => {
+        calls += 1;
+        if (calls === 1) return jsonResponse(500, {});
+        return jsonResponse(200, { api_key: "api-key", friendly_id: "friendly-id" });
+      }) as FetchImpl;
+
+      await provisionDeviceWithRetry(config, mac, undefined, fetchImpl, async () => {});
+      await expect(loadState(stateFilePath, mac)).resolves.toEqual({
+        version: 1,
+        mac,
+        api_key: "api-key",
+        friendly_id: "friendly-id",
+      });
+
+      calls = 0;
+      const complete = await loadState(stateFilePath, mac);
+      const shouldNotCall: FetchImpl = (async () => {
+        calls += 1;
+        return jsonResponse(500, {});
+      }) as FetchImpl;
+      const reused = await provisionDeviceWithRetry(config, mac, complete, shouldNotCall, async () => {});
+      expect(reused).toEqual(complete);
+      expect(calls).toBe(0);
+    });
+  });
+
+  test("propagates a non-LarapaperClientError failure immediately without retry", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const config = testConfig({ stateFile: stateFilePath });
+      const stale: BridgeState = { version: 1, mac: "11:22:33:44:55:66" };
+      const fetchImpl: FetchImpl = (async () =>
+        jsonResponse(200, { api_key: "api-key", friendly_id: "friendly-id" })) as FetchImpl;
+
+      let sleepCalls = 0;
+      await expect(
+        provisionDeviceWithRetry(config, "AA:BB:CC:DD:EE:FF", stale, fetchImpl, async () => {
+          sleepCalls += 1;
+        }),
+      ).rejects.toThrow(/does not match/);
+      expect(sleepCalls).toBe(0);
+    });
+  });
 });

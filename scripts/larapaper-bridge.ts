@@ -429,56 +429,55 @@ export async function fetchSetup(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), SETUP_TIMEOUT_MS);
 
-  let response: Response;
   try {
-    response = await fetchImpl(url, {
-      method: "GET",
-      headers: { ID: mac },
-      redirect: "error",
-      signal: controller.signal,
-    });
-  } catch (error) {
-    throw new LarapaperClientError(
-      "setup_failed",
-      `Larapaper setup request failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    let response: Response;
+    try {
+      response = await fetchImpl(url, {
+        method: "GET",
+        headers: { ID: mac },
+        redirect: "error",
+        signal: controller.signal,
+      });
+    } catch {
+      throw new LarapaperClientError("setup_failed", "Larapaper setup request failed");
+    }
+
+    if (response.status === 404) {
+      throw new LarapaperClientError(
+        "setup_auto_assign_disabled",
+        "Larapaper setup returned 404; enable \"assign_new_devices\" for this account to auto-provision a device",
+      );
+    }
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new LarapaperClientError(
+        "setup_failed",
+        `Larapaper setup returned unexpected status ${response.status}`,
+      );
+    }
+
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch {
+      throw new LarapaperClientError("setup_failed", "Larapaper setup response was not valid JSON");
+    }
+
+    if (
+      !isRecord(body) ||
+      !isNonEmptyString(body.api_key) ||
+      !isNonEmptyString(body.friendly_id)
+    ) {
+      throw new LarapaperClientError(
+        "setup_failed",
+        "Larapaper setup response was missing nonempty api_key/friendly_id",
+      );
+    }
+
+    return { api_key: body.api_key, friendly_id: body.friendly_id };
   } finally {
     clearTimeout(timeout);
   }
-
-  if (response.status === 404) {
-    throw new LarapaperClientError(
-      "setup_auto_assign_disabled",
-      "Larapaper setup returned 404; enable \"assign_new_devices\" for this account to auto-provision a device",
-    );
-  }
-
-  if (response.status < 200 || response.status >= 300) {
-    throw new LarapaperClientError(
-      "setup_failed",
-      `Larapaper setup returned unexpected status ${response.status}`,
-    );
-  }
-
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
-    throw new LarapaperClientError("setup_failed", "Larapaper setup response was not valid JSON");
-  }
-
-  if (
-    !isRecord(body) ||
-    !isNonEmptyString(body.api_key) ||
-    !isNonEmptyString(body.friendly_id)
-  ) {
-    throw new LarapaperClientError(
-      "setup_failed",
-      "Larapaper setup response was missing nonempty api_key/friendly_id",
-    );
-  }
-
-  return { api_key: body.api_key, friendly_id: body.friendly_id };
 }
 
 export const SETUP_RETRY_DELAYS_MS = [5_000, 10_000, 20_000, 40_000, 60_000] as const;
@@ -488,8 +487,9 @@ export const SETUP_RETRY_DELAYS_MS = [5_000, 10_000, 20_000, 40_000, 60_000] as 
  * +5, +10, +20, +40, then +60 seconds repeating pattern.
  */
 export function nextSetupRetryDelayMs(failureCount: number): number {
-  const index = Math.min(failureCount - 1, SETUP_RETRY_DELAYS_MS.length - 1);
-  return SETUP_RETRY_DELAYS_MS[Math.max(index, 0)];
+  const count = Number.isInteger(failureCount) && failureCount > 0 ? failureCount : 1;
+  const index = Math.min(count - 1, SETUP_RETRY_DELAYS_MS.length - 1);
+  return SETUP_RETRY_DELAYS_MS[index];
 }
 
 /**
@@ -498,7 +498,10 @@ export function nextSetupRetryDelayMs(failureCount: number): number {
  * already persisted) before performing a single setup attempt, then
  * persists and returns complete state on success. Throws
  * `LarapaperClientError` on failure; the existing persisted state (pending,
- * with the same MAC) is left intact so retries preserve identity.
+ * with the same MAC) is left intact so retries preserve identity. Throws a
+ * plain `Error` (not `LarapaperClientError`) if `existingState` is defined
+ * for a different MAC, since that indicates a stale/mismatched snapshot
+ * rather than a Larapaper failure.
  */
 export async function provisionDeviceOnce(
   config: Config,
@@ -506,6 +509,12 @@ export async function provisionDeviceOnce(
   existingState: BridgeState | undefined,
   fetchImpl: FetchImpl = fetch,
 ): Promise<CompleteState> {
+  if (existingState !== undefined && existingState.mac !== mac) {
+    throw new Error(
+      `provisionDeviceOnce: existingState MAC ${existingState.mac} does not match requested MAC ${mac}`,
+    );
+  }
+
   if (existingState !== undefined && isCompleteState(existingState)) {
     return existingState;
   }
@@ -518,6 +527,49 @@ export async function provisionDeviceOnce(
   const complete: CompleteState = { version: 1, mac, ...credentials };
   await saveState(config.stateFile, complete);
   return complete;
+}
+
+export type SleepImpl = (ms: number) => Promise<void>;
+
+const defaultSleep: SleepImpl = (ms) => {
+  const { promise, resolve } = Promise.withResolvers<void>();
+  setTimeout(resolve, ms);
+  return promise;
+};
+
+/**
+ * Provisions the device, retrying every `LarapaperClientError` setup
+ * failure (including an actionable 404 `setup_auto_assign_disabled`, since
+ * an operator may enable `assign_new_devices` without restarting the
+ * bridge) at +5, +10, +20, +40, then +60 seconds repeatedly. A
+ * non-`LarapaperClientError` failure (e.g. state persistence) propagates
+ * immediately without retry. Reuses `provisionDeviceOnce`'s
+ * pending/complete-state semantics; state is reloaded from disk before
+ * each attempt so a concurrently-updated MAC is observed rather than
+ * retried against a stale snapshot.
+ */
+export async function provisionDeviceWithRetry(
+  config: Config,
+  mac: string,
+  existingState: BridgeState | undefined,
+  fetchImpl: FetchImpl = fetch,
+  sleep: SleepImpl = defaultSleep,
+): Promise<CompleteState> {
+  let state = existingState;
+  let failureCount = 0;
+
+  for (;;) {
+    try {
+      return await provisionDeviceOnce(config, mac, state, fetchImpl);
+    } catch (error) {
+      if (!(error instanceof LarapaperClientError)) {
+        throw error;
+      }
+      failureCount += 1;
+      await sleep(nextSetupRetryDelayMs(failureCount));
+      state = await loadState(config.stateFile, mac);
+    }
+  }
 }
 
 const DISPLAY_TIMEOUT_MS = 10_000;
@@ -551,68 +603,67 @@ export async function fetchDisplay(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), DISPLAY_TIMEOUT_MS);
 
-  let response: Response;
   try {
-    response = await fetchImpl(url, {
-      method: "GET",
-      headers: { ID: state.mac, "Access-Token": state.api_key },
-      redirect: "error",
-      signal: controller.signal,
-    });
-  } catch (error) {
-    throw new LarapaperClientError(
-      "display_failed",
-      `Larapaper display request failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    let response: Response;
+    try {
+      response = await fetchImpl(url, {
+        method: "GET",
+        headers: { ID: state.mac, "Access-Token": state.api_key },
+        redirect: "error",
+        signal: controller.signal,
+      });
+    } catch {
+      throw new LarapaperClientError("display_failed", "Larapaper display request failed");
+    }
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new LarapaperClientError(
+        "display_failed",
+        `Larapaper display returned unexpected status ${response.status}`,
+      );
+    }
+
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch {
+      throw new LarapaperClientError("display_failed", "Larapaper display response was not valid JSON");
+    }
+
+    if (!isRecord(body)) {
+      throw new LarapaperClientError(
+        "invalid_display_response",
+        "Larapaper display response was not a JSON object",
+      );
+    }
+
+    const rate = body.refresh_rate;
+    if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) {
+      throw new LarapaperClientError(
+        "invalid_display_response",
+        "Larapaper display response had a missing or invalid refresh_rate",
+      );
+    }
+
+    const rawImageUrl = body.image_url;
+    if (
+      rawImageUrl !== null &&
+      rawImageUrl !== undefined &&
+      typeof rawImageUrl !== "string"
+    ) {
+      throw new LarapaperClientError(
+        "invalid_display_response",
+        "Larapaper display response had a non-string image_url",
+      );
+    }
+
+    const imageUrl = isNonEmptyString(rawImageUrl) ? rawImageUrl : null;
+
+    return {
+      imageUrl,
+      effectiveIntervalSeconds: Math.max(rate, config.minPollSeconds),
+    };
   } finally {
     clearTimeout(timeout);
   }
-
-  if (response.status < 200 || response.status >= 300) {
-    throw new LarapaperClientError(
-      "display_failed",
-      `Larapaper display returned unexpected status ${response.status}`,
-    );
-  }
-
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
-    throw new LarapaperClientError("display_failed", "Larapaper display response was not valid JSON");
-  }
-
-  if (!isRecord(body)) {
-    throw new LarapaperClientError(
-      "invalid_display_response",
-      "Larapaper display response was not a JSON object",
-    );
-  }
-
-  const rate = body.refresh_rate;
-  if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) {
-    throw new LarapaperClientError(
-      "invalid_display_response",
-      "Larapaper display response had a missing or invalid refresh_rate",
-    );
-  }
-
-  const rawImageUrl = body.image_url;
-  if (
-    rawImageUrl !== null &&
-    rawImageUrl !== undefined &&
-    typeof rawImageUrl !== "string"
-  ) {
-    throw new LarapaperClientError(
-      "invalid_display_response",
-      "Larapaper display response had a non-string image_url",
-    );
-  }
-
-  const imageUrl = isNonEmptyString(rawImageUrl) ? rawImageUrl : null;
-
-  return {
-    imageUrl,
-    effectiveIntervalSeconds: Math.max(rate, config.minPollSeconds),
-  };
 }
