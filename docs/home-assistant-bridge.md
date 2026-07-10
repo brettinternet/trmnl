@@ -122,9 +122,9 @@ Configuration acceptance also covers an empty required base failing, every empty
 
 **Last known evidence:** The pinned `SetupController.php`, `ResolveDeviceByMacAddress.php`, `DisplayController.php`, and `RunDeviceDisplayCycle.php` links above establish the request headers, returned credentials, idempotency, telemetry side effect, and display payload. The local contract fixes the retry and invalid-result semantics.
 
-**Pending verification before done:** Run deterministic setup/display fixtures and the missing-permission manual scenario; verify credentials and auth headers never appear in logs or error strings.
+**Pending verification before done:** Setup provisioning is implemented and verified (`fetchSetup`, `LarapaperClientError`, `nextSetupRetryDelayMs`, `provisionDeviceOnce`, `resolveMacAndState` in `scripts/larapaper-bridge.ts`; fixtures in `scripts/larapaper-bridge.test.ts`, 46/46 passing). Covered: `ID`-only setup headers with no `Access-Token`, `redirect: "error"`, 10-second abort timeout, 2xx/credential/JSON validation, setup 404 mapped to the actionable `assign_new_devices` error, pending state persisted before the setup call and complete state after success, MAC preserved across a failed attempt and retry, complete-state reuse without calling setup, and the +5/+10/+20/+40/+60 repeating retry delay table. `resolveMacAndState` also fixes a persisted-MAC-reuse gap surfaced by oracle review: an unconfigured MAC now reuses a previously generated MAC from persisted state across restarts instead of regenerating one, since `loadState`'s `expectedMac` parameter is optional. Still open: the display client (`GET /api/display`, `image_url`/`refresh_rate` handling, effective-interval scheduling) and its fixtures.
 
-**Next action:** Implement the setup and display clients against the state primitives, then add fake-clock retry and response-validation fixtures.
+**Next action:** Implement the display client (`GET /api/display` with `ID` and `Access-Token`, `image_url`/`refresh_rate` validation, effective-interval computation) against `fetchSetup`/`provisionDeviceOnce`, then add its fixtures. No review yet; HA-BRIDGE-02 still has an unfinished task.
 
 ### HA-BRIDGE-03 — bounded image acquisition and PNG normalization
 

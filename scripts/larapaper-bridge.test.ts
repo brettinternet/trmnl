@@ -4,13 +4,20 @@ import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
 import {
   canonicalizeMac,
+  fetchSetup,
   generateMac,
   isCompleteState,
+  LarapaperClientError,
   loadState,
+  nextSetupRetryDelayMs,
   parseConfig,
+  provisionDeviceOnce,
   resolveDeviceMac,
+  resolveMacAndState,
   saveState,
   type BridgeState,
+  type Config,
+  type FetchImpl,
 } from "./larapaper-bridge";
 
 const withTempDir = async <T>(callback: (directory: string) => Promise<T>): Promise<T> => {
@@ -466,6 +473,222 @@ describe("loadState/saveState", () => {
       expect(metadata.mode & 0o777).toBe(0o600);
       await expect(loadState(stateFilePath, complete.mac)).resolves.toEqual(complete);
       expect(await readdir(directory)).toEqual(["state.json"]);
+    });
+  });
+});
+
+const testConfig = (overrides: Partial<Config> = {}): Config => ({
+  ...parseConfig(baseEnv()),
+  ...overrides,
+});
+
+const jsonResponse = (status: number, body: unknown): Response =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+
+describe("resolveMacAndState", () => {
+  test("generates a MAC when no MAC is configured and no state exists", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const { mac, state } = await resolveMacAndState(undefined, stateFilePath);
+      expect(mac).toMatch(/^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/);
+      expect(state).toBeUndefined();
+    });
+  });
+
+  test("reuses a previously generated MAC from persisted state across restarts", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const pending: BridgeState = { version: 1, mac: generateMac() };
+      await saveState(stateFilePath, pending);
+
+      const { mac, state } = await resolveMacAndState(undefined, stateFilePath);
+      expect(mac).toBe(pending.mac);
+      expect(state).toEqual(pending);
+    });
+  });
+
+  test("validates a configured MAC against existing persisted state", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const configuredMac = "AA:BB:CC:DD:EE:FF";
+      await saveState(stateFilePath, { version: 1, mac: configuredMac });
+
+      await expect(
+        resolveMacAndState("11:22:33:44:55:66", stateFilePath),
+      ).rejects.toThrow(/Environment\/state MAC mismatch/);
+
+      const { mac } = await resolveMacAndState(configuredMac, stateFilePath);
+      expect(mac).toBe(configuredMac);
+    });
+  });
+
+  test("accepts a configured MAC when no state exists yet", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const { mac, state } = await resolveMacAndState("AA:BB:CC:DD:EE:FF", stateFilePath);
+      expect(mac).toBe("AA:BB:CC:DD:EE:FF");
+      expect(state).toBeUndefined();
+    });
+  });
+});
+
+describe("fetchSetup", () => {
+  test("sends only the ID header, no redirects, and returns credentials on 2xx", async () => {
+    const calls: { url: string; init: RequestInit | undefined }[] = [];
+    const fetchImpl: FetchImpl = (async (url: string | URL, init?: RequestInit) => {
+      calls.push({ url: url.toString(), init });
+      return jsonResponse(200, { api_key: "api-key", friendly_id: "friendly-id" });
+    }) as FetchImpl;
+
+    const credentials = await fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", fetchImpl);
+    expect(credentials).toEqual({ api_key: "api-key", friendly_id: "friendly-id" });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe("https://example.test/api/setup");
+    expect(calls[0]?.init?.headers).toEqual({ ID: "AA:BB:CC:DD:EE:FF" });
+    expect(calls[0]?.init?.redirect).toBe("error");
+  });
+
+  test("maps a 404 to an actionable assign_new_devices error", async () => {
+    const fetchImpl: FetchImpl = (async () => jsonResponse(404, {})) as FetchImpl;
+    await expect(fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", fetchImpl)).rejects.toMatchObject({
+      code: "setup_auto_assign_disabled",
+    });
+  });
+
+  test("rejects a non-2xx response, missing credentials, and non-JSON bodies", async () => {
+    const badStatus: FetchImpl = (async () => jsonResponse(500, {})) as FetchImpl;
+    await expect(fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", badStatus)).rejects.toBeInstanceOf(
+      LarapaperClientError,
+    );
+
+    const missingCredentials: FetchImpl = (async () =>
+      jsonResponse(200, { api_key: "", friendly_id: "friendly-id" })) as FetchImpl;
+    await expect(
+      fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", missingCredentials),
+    ).rejects.toThrow(/nonempty/);
+
+    const nonJson: FetchImpl = (async () =>
+      new Response("not json", { status: 200 })) as FetchImpl;
+    await expect(fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", nonJson)).rejects.toThrow(
+      /not valid JSON/,
+    );
+  });
+
+  test("aborts after the 10-second timeout", async () => {
+    const fetchImpl: FetchImpl = (async (_url: string | URL, init?: RequestInit) => {
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          reject(new DOMException("aborted", "AbortError"));
+        });
+      });
+    }) as FetchImpl;
+
+    const start = Date.now();
+    await expect(fetchSetup(testConfig(), "AA:BB:CC:DD:EE:FF", fetchImpl)).rejects.toBeInstanceOf(
+      LarapaperClientError,
+    );
+    expect(Date.now() - start).toBeGreaterThanOrEqual(9_000);
+  }, 15_000);
+});
+
+describe("nextSetupRetryDelayMs", () => {
+  test("follows the +5, +10, +20, +40, then +60 seconds repeating pattern", () => {
+    expect(nextSetupRetryDelayMs(1)).toBe(5_000);
+    expect(nextSetupRetryDelayMs(2)).toBe(10_000);
+    expect(nextSetupRetryDelayMs(3)).toBe(20_000);
+    expect(nextSetupRetryDelayMs(4)).toBe(40_000);
+    expect(nextSetupRetryDelayMs(5)).toBe(60_000);
+    expect(nextSetupRetryDelayMs(6)).toBe(60_000);
+    expect(nextSetupRetryDelayMs(100)).toBe(60_000);
+  });
+});
+
+describe("provisionDeviceOnce", () => {
+  test("persists pending state before calling setup, then complete state after success", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const config = testConfig({ stateFile: stateFilePath });
+      const mac = "AA:BB:CC:DD:EE:FF";
+
+      let stateDuringCall: BridgeState | undefined;
+      const fetchImpl: FetchImpl = (async () => {
+        stateDuringCall = await loadState(stateFilePath, mac);
+        return jsonResponse(200, { api_key: "api-key", friendly_id: "friendly-id" });
+      }) as FetchImpl;
+
+      const complete = await provisionDeviceOnce(config, mac, undefined, fetchImpl);
+      expect(stateDuringCall).toEqual({ version: 1, mac });
+      expect(complete).toEqual({
+        version: 1,
+        mac,
+        api_key: "api-key",
+        friendly_id: "friendly-id",
+      });
+      await expect(loadState(stateFilePath, mac)).resolves.toEqual(complete);
+    });
+  });
+
+  test("reuses existing complete state without calling setup", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const config = testConfig({ stateFile: stateFilePath });
+      const complete: BridgeState = {
+        version: 1,
+        mac: "AA:BB:CC:DD:EE:FF",
+        api_key: "api-key",
+        friendly_id: "friendly-id",
+      };
+
+      let calls = 0;
+      const fetchImpl: FetchImpl = (async () => {
+        calls += 1;
+        return jsonResponse(200, { api_key: "unused", friendly_id: "unused" });
+      }) as FetchImpl;
+
+      const result = await provisionDeviceOnce(config, complete.mac, complete, fetchImpl);
+      expect(result).toEqual(complete);
+      expect(calls).toBe(0);
+    });
+  });
+
+  test("preserves the same MAC in pending state across a failed setup attempt and retry", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const config = testConfig({ stateFile: stateFilePath });
+      const mac = "AA:BB:CC:DD:EE:FF";
+
+      const failing: FetchImpl = (async () => jsonResponse(500, {})) as FetchImpl;
+      await expect(provisionDeviceOnce(config, mac, undefined, failing)).rejects.toBeInstanceOf(
+        LarapaperClientError,
+      );
+
+      const pendingAfterFailure = await loadState(stateFilePath, mac);
+      expect(pendingAfterFailure).toEqual({ version: 1, mac });
+
+      const succeeding: FetchImpl = (async () =>
+        jsonResponse(200, { api_key: "api-key", friendly_id: "friendly-id" })) as FetchImpl;
+      const complete = await provisionDeviceOnce(config, mac, pendingAfterFailure, succeeding);
+      expect(complete).toEqual({
+        version: 1,
+        mac,
+        api_key: "api-key",
+        friendly_id: "friendly-id",
+      });
+    });
+  });
+
+  test("surfaces a setup 404 as an actionable assign_new_devices error", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const config = testConfig({ stateFile: stateFilePath });
+      const notFound: FetchImpl = (async () => jsonResponse(404, {})) as FetchImpl;
+
+      await expect(
+        provisionDeviceOnce(config, "AA:BB:CC:DD:EE:FF", undefined, notFound),
+      ).rejects.toMatchObject({ code: "setup_auto_assign_disabled" });
     });
   });
 });
