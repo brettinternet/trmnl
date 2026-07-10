@@ -145,7 +145,7 @@ async function statStateFile(stateFilePath: string) {
 
 export async function loadState(
   stateFilePath: string,
-  expectedMac: string,
+  expectedMac?: string,
 ): Promise<BridgeState | undefined> {
   const metadata = await statStateFile(stateFilePath);
   if (metadata === undefined) return undefined;
@@ -172,12 +172,42 @@ export async function loadState(
   }
 
   const state = normalizeState(parsed, stateFilePath);
-  if (state.mac !== expectedMac) {
+  if (expectedMac !== undefined && state.mac !== expectedMac) {
     throw new Error(
       `Environment/state MAC mismatch in ${stateFilePath}: persisted MAC does not match expected MAC`,
     );
   }
   return state;
+}
+
+/**
+ * Determines the MAC to provision with and returns any existing persisted
+ * state for it. A configured MAC is validated against persisted state when
+ * state already exists; an unconfigured MAC reuses a previously generated
+ * MAC from persisted state instead of generating a new one on every
+ * restart, and only generates a fresh MAC when no state exists yet.
+ */
+export async function resolveMacAndState(
+  configuredMac: string | undefined,
+  stateFilePath: string,
+): Promise<{ mac: string; state: BridgeState | undefined }> {
+  const existing = await loadState(stateFilePath);
+
+  if (configuredMac !== undefined) {
+    const mac = canonicalizeMac(configuredMac);
+    if (existing !== undefined && existing.mac !== mac) {
+      throw new Error(
+        `Environment/state MAC mismatch in ${stateFilePath}: persisted MAC does not match expected MAC`,
+      );
+    }
+    return { mac, state: existing };
+  }
+
+  if (existing !== undefined) {
+    return { mac: existing.mac, state: existing };
+  }
+
+  return { mac: generateMac(), state: undefined };
 }
 
 export async function saveState(
@@ -361,4 +391,127 @@ export function parseConfig(
     ),
     auth,
   };
+}
+
+export type LarapaperClientErrorCode = "setup_auto_assign_disabled" | "setup_failed";
+
+export class LarapaperClientError extends Error {
+  readonly code: LarapaperClientErrorCode;
+
+  constructor(code: LarapaperClientErrorCode, message: string) {
+    super(message);
+    this.name = "LarapaperClientError";
+    this.code = code;
+  }
+}
+
+export type FetchImpl = typeof fetch;
+
+const SETUP_TIMEOUT_MS = 10_000;
+
+export type SetupCredentials = { api_key: string; friendly_id: string };
+
+/**
+ * Performs exactly one GET /api/setup attempt. Sends only the `ID` header
+ * (never `Access-Token`), refuses redirects, and enforces a 10-second
+ * operation timeout. Callers own retry scheduling.
+ */
+export async function fetchSetup(
+  config: Config,
+  mac: string,
+  fetchImpl: FetchImpl = fetch,
+): Promise<SetupCredentials> {
+  const url = new URL("api/setup", config.baseUrl);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SETUP_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetchImpl(url, {
+      method: "GET",
+      headers: { ID: mac },
+      redirect: "error",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    throw new LarapaperClientError(
+      "setup_failed",
+      `Larapaper setup request failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (response.status === 404) {
+    throw new LarapaperClientError(
+      "setup_auto_assign_disabled",
+      "Larapaper setup returned 404; enable \"assign_new_devices\" for this account to auto-provision a device",
+    );
+  }
+
+  if (response.status < 200 || response.status >= 300) {
+    throw new LarapaperClientError(
+      "setup_failed",
+      `Larapaper setup returned unexpected status ${response.status}`,
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new LarapaperClientError("setup_failed", "Larapaper setup response was not valid JSON");
+  }
+
+  if (
+    !isRecord(body) ||
+    !isNonEmptyString(body.api_key) ||
+    !isNonEmptyString(body.friendly_id)
+  ) {
+    throw new LarapaperClientError(
+      "setup_failed",
+      "Larapaper setup response was missing nonempty api_key/friendly_id",
+    );
+  }
+
+  return { api_key: body.api_key, friendly_id: body.friendly_id };
+}
+
+export const SETUP_RETRY_DELAYS_MS = [5_000, 10_000, 20_000, 40_000, 60_000] as const;
+
+/**
+ * Delay before the Nth setup retry (1-based failure count), following the
+ * +5, +10, +20, +40, then +60 seconds repeating pattern.
+ */
+export function nextSetupRetryDelayMs(failureCount: number): number {
+  const index = Math.min(failureCount - 1, SETUP_RETRY_DELAYS_MS.length - 1);
+  return SETUP_RETRY_DELAYS_MS[Math.max(index, 0)];
+}
+
+/**
+ * Provisions the device exactly once: reuses existing complete state
+ * without calling setup, otherwise persists pending state for `mac` (if not
+ * already persisted) before performing a single setup attempt, then
+ * persists and returns complete state on success. Throws
+ * `LarapaperClientError` on failure; the existing persisted state (pending,
+ * with the same MAC) is left intact so retries preserve identity.
+ */
+export async function provisionDeviceOnce(
+  config: Config,
+  mac: string,
+  existingState: BridgeState | undefined,
+  fetchImpl: FetchImpl = fetch,
+): Promise<CompleteState> {
+  if (existingState !== undefined && isCompleteState(existingState)) {
+    return existingState;
+  }
+
+  if (existingState === undefined) {
+    await saveState(config.stateFile, { version: 1, mac });
+  }
+
+  const credentials = await fetchSetup(config, mac, fetchImpl);
+  const complete: CompleteState = { version: 1, mac, ...credentials };
+  await saveState(config.stateFile, complete);
+  return complete;
 }
