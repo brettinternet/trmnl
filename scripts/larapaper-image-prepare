@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+input=${TASK_IMAGE:-}
+output=${TASK_OUTPUT:-}
+device=${TASK_DEVICE:-}
+format=${TASK_FORMAT:-}
+e1002_palette=${TASK_E1002_PALETTE:-}
+e1002_colors=${TASK_E1002_COLORS:-}
+e1002_max_bytes=${TASK_E1002_MAX_BYTES:-}
+
+: "${device:=${LARAPAPER_DEVICE:-trmnl-og-diy}}"
+: "${format:=${LARAPAPER_IMAGE_FORMAT:-png}}"
+format=$(printf '%s' "$format" | tr '[:upper:]' '[:lower:]')
+: "${e1002_palette:=${LARAPAPER_E1002_PALETTE:-auto}}"
+: "${e1002_colors:=${LARAPAPER_E1002_COLORS:-20}}"
+: "${e1002_max_bytes:=${LARAPAPER_E1002_MAX_BYTES:-90000}}"
+e1002_palette=$(printf '%s' "$e1002_palette" | tr '[:upper:]' '[:lower:]' | tr ' _' '--')
+
+device_key=$(printf '%s' "$device" | tr '[:upper:]' '[:lower:]' | tr ' _' '--')
+case "$device_key" in
+  e1002)
+    width=800
+    height=480
+    image_mode=color
+    ;;
+  trmnl-og-diy|trmnl-og|og|og-diy)
+    width=800
+    height=480
+    image_mode=mono
+    ;;
+  *)
+    printf 'DEVICE must be one of: e1002, trmnl-og-diy\n' >&2
+    exit 1
+    ;;
+esac
+
+case "$format" in
+  png|bmp)
+    ;;
+  *)
+    printf 'FORMAT must be one of: png, bmp\n' >&2
+    exit 1
+    ;;
+esac
+
+if [ ! -f "$input" ]; then
+  printf 'IMAGE does not exist: %s\n' "$input" >&2
+  exit 1
+fi
+
+if [ -z "$output" ]; then
+  mkdir -p .task/larapaper
+  filename=$(basename "$input")
+  output=".task/larapaper/${filename%.*}-${device_key}.${format}"
+else
+  mkdir -p "$(dirname "$output")"
+fi
+
+printf 'larapaper:image:prepare vars:\n'
+printf '  image=%s\n' "$input"
+printf '  output=%s\n' "$output"
+printf '  device=%s device_key=%s format=%s\n' "$device" "$device_key" "$format"
+printf '  TASK_E1002_PALETTE=%s LARAPAPER_E1002_PALETTE=%s effective=%s\n' "${TASK_E1002_PALETTE:-}" "${LARAPAPER_E1002_PALETTE:-}" "$e1002_palette"
+printf '  TASK_E1002_COLORS=%s LARAPAPER_E1002_COLORS=%s effective=%s\n' "${TASK_E1002_COLORS:-}" "${LARAPAPER_E1002_COLORS:-}" "$e1002_colors"
+printf '  TASK_E1002_MAX_BYTES=%s LARAPAPER_E1002_MAX_BYTES=%s effective=%s\n' "${TASK_E1002_MAX_BYTES:-}" "${LARAPAPER_E1002_MAX_BYTES:-}" "$e1002_max_bytes"
+printf '\n'
+
+common_args=(
+  "$input"
+  -resize "${width}x${height}^"
+  -background white
+  -gravity center
+  -extent "${width}x${height}"
+  -alpha remove
+  -alpha off
+)
+
+prepare_e1002_png() {
+  attempt=$1
+  attempt_mode=${attempt%%:*}
+  attempt_colors=$e1002_colors
+  if [ "$attempt_mode" != "$attempt" ]; then
+    attempt_colors=${attempt#*:}
+  fi
+
+  case "$attempt_mode" in
+    native|six|6)
+      palette=$(mktemp "${TMPDIR:-/tmp}/larapaper-e1002-palette.XXXXXX")
+      mise exec imagemagick -- magick -size 1x1 xc:white xc:black xc:red xc:yellow xc:blue xc:lime +append "png:$palette"
+      mise exec imagemagick -- magick "${common_args[@]}" -dither None -remap "$palette" -depth 4 -define png:compression-level=9 -strip "png:$output"
+      rm -f "$palette"
+      ;;
+    native-dither|dither|riemersma)
+      palette=$(mktemp "${TMPDIR:-/tmp}/larapaper-e1002-palette.XXXXXX")
+      mise exec imagemagick -- magick -size 1x1 xc:white xc:black xc:red xc:yellow xc:blue xc:lime +append "png:$palette"
+      mise exec imagemagick -- magick "${common_args[@]}" -dither Riemersma -remap "$palette" -depth 4 -define png:compression-level=9 -strip "png:$output"
+      rm -f "$palette"
+      ;;
+    ordered|halftone)
+      mise exec imagemagick -- magick "${common_args[@]}" -ordered-dither o4x4,6 -colors 6 -depth 4 -define png:compression-level=9 -strip "png:$output"
+      ;;
+    photo|photo-adaptive|vivid)
+      mise exec imagemagick -- magick "${common_args[@]}" -auto-level -modulate 105,200,100 +dither -colors "$attempt_colors" -depth 8 -define png:compression-level=9 -strip "png:$output"
+      ;;
+    adaptive)
+      mise exec imagemagick -- magick "${common_args[@]}" +dither -colors "$attempt_colors" -depth 8 -define png:compression-level=9 -strip "png:$output"
+      ;;
+    adaptive-ordered|ordered-adaptive|ordered-dither)
+      mise exec imagemagick -- magick "${common_args[@]}" -ordered-dither o8x8 -colors "$attempt_colors" -depth 8 -define png:compression-level=9 -strip "png:$output"
+      ;;
+    adaptive-dither|adaptive-riemersma)
+      mise exec imagemagick -- magick "${common_args[@]}" -dither Riemersma -colors "$attempt_colors" -depth 8 -define png:compression-level=9 -strip "png:$output"
+      ;;
+    adaptive-floyd|floyd|floyd-steinberg)
+      mise exec imagemagick -- magick "${common_args[@]}" -dither FloydSteinberg -colors "$attempt_colors" -depth 8 -define png:compression-level=9 -strip "png:$output"
+      ;;
+    none|off|passthrough)
+      mise exec imagemagick -- magick "${common_args[@]}" -depth 8 -define png:compression-level=9 -strip "png:$output"
+      ;;
+    *)
+      printf 'E1002_PALETTE must be one of: auto, photo, native, native-dither, ordered, adaptive, adaptive-ordered, adaptive-dither, adaptive-floyd, none\n' >&2
+      exit 1
+      ;;
+  esac
+}
+
+if [ "$format" = png ]; then
+  if [ "$image_mode" = color ]; then
+    case "$e1002_palette" in
+      auto)
+        e1002_attempts=
+        for step in "$e1002_colors" 24 22 20 18 16 12 8; do
+          if [ "$step" -le "$e1002_colors" ]; then
+            e1002_attempts="$e1002_attempts photo:$step"
+          fi
+        done
+        e1002_attempts="$e1002_attempts adaptive:$e1002_colors adaptive:20 adaptive:18 adaptive:16 adaptive-ordered native-dither native"
+        ;;
+      photo|photo-adaptive|vivid)
+        e1002_attempts="$e1002_palette:$e1002_colors adaptive:$e1002_colors native-dither native"
+        ;;
+      adaptive-dither|adaptive-riemersma|adaptive-floyd|floyd|floyd-steinberg)
+        e1002_attempts="$e1002_palette:$e1002_colors adaptive:$e1002_colors adaptive-ordered native-dither native"
+        ;;
+      adaptive|adaptive-ordered|ordered-adaptive|ordered-dither)
+        e1002_attempts="$e1002_palette:$e1002_colors native-dither native"
+        ;;
+      native-dither|dither|riemersma|ordered|halftone)
+        e1002_attempts="$e1002_palette native"
+        ;;
+      native|six|6|none|off|passthrough)
+        e1002_attempts="$e1002_palette"
+        ;;
+      *)
+        e1002_attempts="$e1002_palette"
+        ;;
+    esac
+
+    e1002_selected_palette=
+    output_bytes=0
+    for attempt in $e1002_attempts; do
+      printf '  trying_palette=%s\n' "$attempt"
+      prepare_e1002_png "$attempt"
+      output_bytes=$(wc -c < "$output" | tr -d '[:space:]')
+      if [ "$e1002_max_bytes" = 0 ] || [ "$output_bytes" -le "$e1002_max_bytes" ]; then
+        e1002_selected_palette=$attempt
+        e1002_palette=$attempt
+        printf '  selected_palette=%s output_bytes=%s\n\n' "$e1002_selected_palette" "$output_bytes"
+        break
+      fi
+      printf '  rejected_palette=%s output_bytes=%s max_bytes=%s; trying fallback\n' "$attempt" "$output_bytes" "$e1002_max_bytes" >&2
+    done
+
+    if [ -z "$e1002_selected_palette" ]; then
+      printf 'Output is %s bytes after all fallbacks, above E1002_MAX_BYTES=%s\n' "$output_bytes" "$e1002_max_bytes" >&2
+      exit 1
+    fi
+  else
+    mise exec imagemagick -- magick "${common_args[@]}" -monochrome -colors 2 -depth 1 -define png:compression-level=9 -strip "png:$output"
+  fi
+else
+  mise exec imagemagick -- magick "${common_args[@]}" -monochrome -colors 2 -depth 1 -strip "bmp3:$output"
+fi
+
+mise exec imagemagick -- magick identify "$output"

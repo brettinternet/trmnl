@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+
+input=${TASK_IMAGE:-}
+device=${TASK_DEVICE:-}
+format=${TASK_FORMAT:-}
+webhook_url=${TASK_WEBHOOK_URL:-}
+base_url=${TASK_BASE_URL:-}
+plugin_uuid=${TASK_PLUGIN_UUID:-}
+e1002_palette=${TASK_E1002_PALETTE:-}
+e1002_colors=${TASK_E1002_COLORS:-}
+e1002_max_bytes=${TASK_E1002_MAX_BYTES:-}
+
+: "${device:=${LARAPAPER_DEVICE:-trmnl-og-diy}}"
+: "${format:=${LARAPAPER_IMAGE_FORMAT:-png}}"
+format=$(printf '%s' "$format" | tr '[:upper:]' '[:lower:]')
+: "${e1002_palette:=${LARAPAPER_E1002_PALETTE:-auto}}"
+: "${e1002_colors:=${LARAPAPER_E1002_COLORS:-20}}"
+: "${e1002_max_bytes:=${LARAPAPER_E1002_MAX_BYTES:-90000}}"
+: "${webhook_url:=${LARAPAPER_WEBHOOK_URL:-}}"
+: "${base_url:=${LARAPAPER_BASE_URL:-}}"
+: "${plugin_uuid:=${LARAPAPER_PLUGIN_UUID:-}}"
+
+printf 'larapaper:image:post vars:\n'
+printf '  image=%s\n' "$input"
+printf '  device=%s format=%s mime_type=pending\n' "$device" "$format"
+printf '  TASK_E1002_PALETTE=%s LARAPAPER_E1002_PALETTE=%s effective=%s\n' "${TASK_E1002_PALETTE:-}" "${LARAPAPER_E1002_PALETTE:-}" "$e1002_palette"
+printf '  TASK_E1002_COLORS=%s LARAPAPER_E1002_COLORS=%s effective=%s\n' "${TASK_E1002_COLORS:-}" "${LARAPAPER_E1002_COLORS:-}" "$e1002_colors"
+printf '  TASK_E1002_MAX_BYTES=%s LARAPAPER_E1002_MAX_BYTES=%s effective=%s\n' "${TASK_E1002_MAX_BYTES:-}" "${LARAPAPER_E1002_MAX_BYTES:-}" "$e1002_max_bytes"
+printf '\n'
+
+if [ -z "$webhook_url" ]; then
+  if [ -z "$base_url" ] || [ -z "$plugin_uuid" ]; then
+    printf 'Set LARAPAPER_WEBHOOK_URL or both LARAPAPER_BASE_URL and LARAPAPER_PLUGIN_UUID in .env\n' >&2
+    exit 1
+  fi
+
+  webhook_url="${base_url%/}/api/plugins/${plugin_uuid}/webhook"
+fi
+
+case "$format" in
+  png)
+    mime_type=image/png
+    ;;
+  bmp)
+    mime_type=image/bmp
+    ;;
+  *)
+    printf 'FORMAT must be one of: png, bmp\n' >&2
+    exit 1
+    ;;
+esac
+
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+prepared="$tmp_dir/larapaper-image.${format}"
+
+TASK_IMAGE=$input \
+TASK_OUTPUT=$prepared \
+TASK_DEVICE=$device \
+TASK_FORMAT=$format \
+TASK_E1002_PALETTE=$e1002_palette \
+TASK_E1002_COLORS=$e1002_colors \
+TASK_E1002_MAX_BYTES=$e1002_max_bytes \
+  "$script_dir/larapaper-image-prepare"
+
+curl --fail-with-body --no-progress-meter -X POST \
+  -F "image=@${prepared};type=${mime_type}" \
+  "$webhook_url"

@@ -4,5 +4,6 @@
 "aqua:gitleaks/gitleaks" = "latest"
 "aqua:go-task/task" = "latest"
 "aqua:jqlang/jq" = "latest"
+"conda:imagemagick" = "latest"
 bun = "latest"
 direnv = "latest"

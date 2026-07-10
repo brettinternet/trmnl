@@ -24,6 +24,40 @@ tasks:
     cmds:
       - mise exec gitleaks -- gitleaks git --redact --verbose --no-banner
 
+  larapaper:image:prepare:
+    desc: Prepare an image for a Larapaper/TRMNL device
+    silent: true
+    requires:
+      vars: [IMAGE]
+    env:
+      TASK_IMAGE: "{{.IMAGE}}"
+      TASK_OUTPUT: '{{default "" .OUTPUT}}'
+      TASK_DEVICE: '{{default "" .DEVICE}}'
+      TASK_FORMAT: '{{default "" .FORMAT}}'
+      TASK_E1002_PALETTE: '{{default "" .E1002_PALETTE}}'
+      TASK_E1002_COLORS: '{{default "" .E1002_COLORS}}'
+      TASK_E1002_MAX_BYTES: '{{default "" .E1002_MAX_BYTES}}'
+    cmds:
+      - scripts/larapaper-image-prepare
+
+  larapaper:image:post:
+    desc: Prepare and post an image to a Larapaper plugin webhook
+    silent: true
+    requires:
+      vars: [IMAGE]
+    env:
+      TASK_IMAGE: "{{.IMAGE}}"
+      TASK_DEVICE: '{{default "" .DEVICE}}'
+      TASK_FORMAT: '{{default "" .FORMAT}}'
+      TASK_WEBHOOK_URL: '{{default "" .WEBHOOK_URL}}'
+      TASK_BASE_URL: '{{default "" .BASE_URL}}'
+      TASK_PLUGIN_UUID: '{{default "" .PLUGIN_UUID}}'
+      TASK_E1002_PALETTE: '{{default "" .E1002_PALETTE}}'
+      TASK_E1002_COLORS: '{{default "" .E1002_COLORS}}'
+      TASK_E1002_MAX_BYTES: '{{default "" .E1002_MAX_BYTES}}'
+    cmds:
+      - scripts/larapaper-image-post
+
   github:test-token:
     desc: Test GitHub GraphQL auth with GITHUB_TOKEN
     requires:
