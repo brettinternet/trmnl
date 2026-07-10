@@ -447,4 +447,25 @@ describe("loadState/saveState", () => {
       expect(await readdir(parentDirectory)).toEqual(["state.json"]);
     });
   });
+
+  test("atomically replaces existing state and leaves no temp file", async () => {
+    await withTempDir(async (directory) => {
+      const stateFilePath = join(directory, "state.json");
+      const pending: BridgeState = { version: 1, mac: "AA:BB:CC:DD:EE:FF" };
+      await saveState(stateFilePath, pending);
+
+      const complete: BridgeState = {
+        version: 1,
+        mac: "AA:BB:CC:DD:EE:FF",
+        api_key: "api-key",
+        friendly_id: "friendly-id",
+      };
+      await saveState(stateFilePath, complete);
+
+      const metadata = await stat(stateFilePath);
+      expect(metadata.mode & 0o777).toBe(0o600);
+      await expect(loadState(stateFilePath, complete.mac)).resolves.toEqual(complete);
+      expect(await readdir(directory)).toEqual(["state.json"]);
+    });
+  });
 });
