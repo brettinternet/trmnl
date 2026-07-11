@@ -453,6 +453,7 @@ If standalone non-HA support returns, create a separate bridge plan rather than 
 ### HA-HACS-04 — bounded image transport, validation, and conversion
 
 **Status / start condition:** Implementation-ready: yes. Start only after HA-HACS-01, HA-HACS-02, and HA-HACS-03 are accepted. Implement and test this item only in `brettinternet/home-assistant-larapaper-bridge`; the backlog remains planning-only in the recipes repository.
+**Completed task:** URL resolution — implemented pathname-prefix-preserving HTTP(S) image URL normalization, origin-only image-base override, source path/query preservation, unsafe URL rejection including protocol-relative forms, and focused tests in dedicated-repository commits `3d9ae29`, `a23cb15`; `python -m pytest -q tests/components/larapaper_bridge/test_image.py` — 23 passed; full integration suite — 94 passed.
 
 **Goal / product intent:** Turn the URL returned by one accepted Larapaper display result into one immutable, bounded PNG (or a typed safe failure), without leaking Larapaper credentials, allowing SSRF, blocking display cadence, or permitting abandoned work to publish state. This item supplies the image pipeline; HA-HACS-03 owns lifecycle/cycle fencing, deadlines, retries, cache publication, and all timers.
 
