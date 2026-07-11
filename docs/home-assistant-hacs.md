@@ -337,6 +337,7 @@ If standalone non-HA support returns, create a separate bridge plan rather than 
 ### HA-HACS-02 — provisioning client, lifecycle coordinator, and Larapaper display client
 
 **Status / start condition:** Implementation-ready: yes. Start only after HA-HACS-01 has been accepted, including its validated config-entry data, private Store adapter, pending/complete state schema, and identity-selection contract. Begin by creating/reserving the dedicated future public repository `brettinternet/home-assistant-larapaper-bridge`; this work belongs there, not in this recipes repository. The current backlog remains in this recipes repository.
+**Completed task:** One-shot Larapaper client — implemented shared-session `/api/setup` and `/api/display` operations with pathname-prefix URL joining, exact headers, redirect refusal, end-to-end 10-second timeout, typed safe failures, credential validation, display-rate/image normalization, and focused tests in dedicated-repository commit `871d04d`.
 
 **Goal / product intent:** Provision or reuse exactly one synthetic Larapaper device for one Home Assistant config entry, persist its credentials safely, and expose one validated display result per scheduler request. The runtime must be lifecycle-safe: setup retries may continue only while the current config-entry lifecycle is active, and unload/reload must prevent stale work from committing state. A camera read or any other HA read must never initiate a Larapaper request.
 
