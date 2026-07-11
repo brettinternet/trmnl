@@ -515,6 +515,7 @@ If standalone non-HA support returns, create a separate bridge plan rather than 
 ### HA-HACS-05 — native camera, diagnostics, HACS packaging, and v1.0.0 release gate
 
 **Status / start condition:** Implementation-ready. Start only after HA-HACS-01 through HA-HACS-04 pass their focused tests and freeze their contracts. HA-HACS-05 delivers and verifies release artifacts only in `brettinternet/home-assistant-larapaper-bridge`; this backlog remains planning-only in the recipes repository.
+**Completed task:** Native cache-only camera and redacted diagnostics projections — implemented `camera.py` and `diagnostics.py` with immutable PNG reads, monotonic freshness/unavailability boundaries, fixed diagnostics whitelist, UTC serialization, status/error redaction, and focused tests in dedicated-repository commit `1c2cb62`; `python -m pytest -q tests/components/larapaper_bridge/test_camera.py tests/components/larapaper_bridge/test_diagnostics.py` — 8 passed; full integration suite — 171 passed.
 
 **Goal / product intent:** Ship one installable Home Assistant integration that exposes a native camera and safe diagnostics while proving that repeated Home Assistant reads are projections only: `async_camera_image()` never performs network, protocol, scheduling, conversion, or state advancement. Make the integration installable through a HACS custom repository on a clean HA instance, then publish the first real GitHub release. Default HACS-list inclusion is explicitly optional after v1.0.0 and is not a release gate.
 
