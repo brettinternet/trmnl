@@ -288,7 +288,8 @@ If standalone non-HA support returns, create a separate bridge plan rather than 
 
 **Status / start condition:** Implementation-ready and first in the HA-HACS sequence. Start by creating or reserving the dedicated public repository `brettinternet/home-assistant-larapaper-bridge`; this work is not implemented in the current recipes repository. No Larapaper network or provisioning request is permitted in this item.
 **Completed task:** Repository bootstrap — dedicated public repository exists at `https://github.com/brettinternet/home-assistant-larapaper-bridge`; package layout, minimum `0.1.0` manifest, and focused pytest harness committed as `fcd38e0` and `4e61193`.
-**Completed task:** Config-flow validation and pending identity — implemented normalized URL/MAC/numeric fields, CSPRNG identity generation, duplicate/single-instance rejection, and pending Store persistence with focused HA tests in `3994dbc`.
+**Completed task:** Config-flow validation and pending identity — implemented normalized URL/MAC/numeric fields, CSPRNG identity generation, duplicate/single-instance rejection, and pending Store persistence with focused HA tests in `a3339a2`.
+**Review marker:** reviewed: `fcd38e0`, `4e61193`, `a3339a2` [review-fix: `3669b1a`]; verified: 29 focused tests passed with pytest plugin autoload disabled; manifest/config-flow import passed.
 
 **Goal / product intent:** Bootstrap one native Home Assistant `larapaper_bridge` integration and its test harness. Collect and persist validated configuration plus a stable synthetic device identity so a flow interrupted after persistence can resume with the same MAC. Leave all network, lifecycle, polling, image, and release behavior to later ordered items.
 
