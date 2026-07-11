@@ -399,6 +399,7 @@ If standalone non-HA support returns, create a separate bridge plan rather than 
 ### HA-HACS-03 — independent display scheduler, cache, and lifecycle fencing
 
 **Status / start condition:** Implementation-ready: yes. Start only after HA-HACS-01 has created the integration entry/runtime state and HA-HACS-02 has accepted complete provisioning and exposed its typed display-result/failure contract. This item is independently executable with fake clock, fake coordinator, and fake image operation; it does not require a real HTTP client, Pillow, or executor implementation.
+**Completed task:** Frozen image-operation seam — added `OperationToken`, immutable `ImageOutcome`, exact `ImageErrorCode` values, and the `ImageOperation` protocol with focused invariant tests in dedicated-repository commit `e37778f`.
 
 **Goal / product intent:** Poll exactly one provisioned Larapaper device at its effective cadence, retain the last safe PNG in memory, and ensure abandoned asynchronous work can never mutate the current Home Assistant entry. Home Assistant camera reads remain cache-only and never advance Larapaper.
 
