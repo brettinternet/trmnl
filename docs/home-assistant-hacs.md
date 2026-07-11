@@ -572,4 +572,4 @@ blocked: HA-HACS-05 — repository code-license choice requires owner approval; 
 
 **Optional out-of-scope idea:** After v1.0.0, submit the repository for default HACS inclusion and document the submission/review state; inclusion is never retroactively required for this item.
 
-**Next action:** After HA-HACS-04 acceptance, create/reserve the public repository, implement the camera and diagnostics projections against the frozen runtime contracts, add the minimal metadata/brand/README/CI, run focused tests and both official actions, perform the clean custom-repository install and manual QA, then publish tag `v1.0.0` and record all verification evidence above.
+**Next action:** Obtain explicit owner approval for the repository code license; then run clean HACS custom-repository installation and manual QA, publish tag `v1.0.0`, and record all verification evidence before writing the item-level `reviewed:` marker.
