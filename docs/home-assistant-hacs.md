@@ -573,3 +573,49 @@ blocked: HA-HACS-05 — repository code-license choice requires owner approval; 
 **Optional out-of-scope idea:** After v1.0.0, submit the repository for default HACS inclusion and document the submission/review state; inclusion is never retroactively required for this item.
 
 **Next action:** Obtain explicit owner approval for the repository code license; then run clean HACS custom-repository installation and manual QA, publish tag `v1.0.0`, and record all verification evidence before writing the item-level `reviewed:` marker.
+
+### HA-HACS-06 — multi-device support and per-device manual display refresh
+
+**Status / start condition:** Rough draft only; not implementation-ready and not part of the V1 release gate. Treat this as a candidate post-V1 enhancement in `brettinternet/home-assistant-larapaper-bridge`, not work in this recipes repository. Start only after HA-HACS-05 has passed its clean-install/release checks and the product semantics below have been finalized.
+
+**Goal / product intent:** Support multiple independent Larapaper synthetic devices in one Home Assistant instance and expose a native per-device button that requests an immediate next display pull. Preserve the existing automatic scheduler, cache-only camera reads, side-effect boundaries, lifecycle fencing, and credential-redaction guarantees.
+
+**Candidate shape (not yet decided):**
+
+* Support multiple independent devices while leaving whether each device is a separate config entry, a multi-device entry, or another Home Assistant-native arrangement open for design. Whichever shape is chosen must isolate each device's canonical identity, persisted credentials, scheduler, image cache, native camera, diagnostics projection, and refresh button.
+* Revisit the V1 `single_config_entry: true` constraint, duplicate-identity rules, stable entity/device identifiers, and config-flow UX as acceptance questions rather than settled schema.
+* Revisit the V1 domain-wide single-device Store payload and choose a device-scoped persistence and migration model. Candidate options include one Store payload per config entry or one versioned domain map with strict per-device records; do not allow one device to overwrite another device's MAC or API key.
+* Keep scheduler/runtime lifecycle fencing per device even if the final Home Assistant representation or domain holder shape changes. One device's lifecycle epoch, cycle generation, cache, timers, diagnostics, and credentials must remain isolated from every other device.
+* Add one native Home Assistant `ButtonEntity` per device, initially named **Refresh display**. Pressing it must request the next Larapaper view through that device's scheduler; it must not call the HTTP client directly and must not be implemented as a camera read.
+* A manual press is an explicit side-effecting `/api/display` request when admitted as a new cycle. Concurrency, coalescing/rejection, cadence reset, and ambiguous-timeout semantics remain open decisions; the final design must never permit duplicate concurrent display calls for one device.
+* An admitted manual cycle should reuse the existing display/image pipeline, lifecycle/cycle-token fencing, atomic last-good cache publication, and captured-URL image retry boundary. Whether it replaces, joins, or waits behind scheduled work remains open; image recovery must not silently turn into an extra display pull.
+* The automatic scheduler continues to advance each device's Larapaper playlist without user interaction. “Multiple views” in this draft means multiple independently addressable devices/camera entities; retaining image history, pinning playlist positions, or exposing several playlist items simultaneously is not included.
+
+**Scope candidates:**
+
+* Config-flow UX for adding a second and subsequent device, including per-device names, MAC selection/generation, duplicate identity checks, and removal/reload behavior.
+* Versioned Store migration from the V1 single-device state shape to device-scoped pending/complete records, with no credential or identity cross-contamination.
+* Per-device `CameraEntity`, diagnostics, availability, entity naming, translations, and `ButtonEntity` registration through the normal Home Assistant platform setup.
+* Scheduler API for an explicit manual-cycle request, single-flight/coalescing behavior, button availability, cadence settlement, and safe handling of a timeout whose `/api/display` side effect is ambiguous.
+* Resource policy for multiple devices sharing the domain-scoped image session, executor, admission slot, and final-stop cleanup. Revisit whether the V1 single-worker/non-queued admission policy remains acceptable or needs fair per-device scheduling.
+* Focused tests for independent device lifecycles, restart persistence, duplicate identities, concurrent scheduled/manual requests, manual refresh success/failure, image retry behavior, unload races, and repeated cache-only camera reads.
+* README and native dashboard examples showing multiple camera entities and the per-device Refresh display button. A custom frontend card remains unnecessary for this feature.
+
+**Non-goals:** A custom dashboard/plugin, direct frontend calls to `/api/display`, concurrent display requests for one device, image-history storage, playlist editing or assignment, multiple camera entities for one Larapaper device, public HTTP routes, Generic Camera configuration, or changing the Larapaper protocol.
+
+**Open questions requiring a separate design decision:**
+
+1. Should a button press coalesce with an already-running scheduled display cycle, wait for that cycle, or be rejected with an explicit unavailable/busy indication?
+2. After a manual pull, should the next automatic deadline reset from manual settlement, retain the previous deadline, or be capped to prevent repeated button presses from changing cadence?
+3. How should Home Assistant represent a timed-out manual request when Larapaper may already have advanced the playlist?
+4. Should adding devices use repeated config-flow entries, a single multi-device flow, or discovery of already-provisioned synthetic devices?
+5. Should the refresh button be available while the camera is cold, stale, or in error, and which diagnostics code should represent a manual-cycle failure?
+6. What Store migration and rollback behavior is required for an existing V1 installation, including removal of a device without deleting another device's state?
+7. Is a single shared image-conversion worker fair and safe for the expected device count, or does multi-device support require bounded per-device admission/fairness?
+
+**Acceptance sketch:** Multiple configured devices survive restart with independent identities, credentials, schedulers, caches, cameras, diagnostics, and refresh buttons. Tests prove the selected button/concurrency/cadence/timeout semantics without allowing duplicate concurrent display calls or cross-device mutation. Successful manual pulls publish the returned image; display failures do not fast-retry unless a later design explicitly changes that safety contract; image failures retry only the captured URL. Camera reads remain cache-only. Unload/reload and late completions cannot mutate the wrong device. Store migration is explicit, tested, and redacted. No custom frontend package is required.
+
+**Dependencies / order:** Revisit HA-HACS-01's fixed Store key and `single_config_entry` manifest decision, HA-HACS-02's per-entry provisioning/runtime ownership, HA-HACS-03's scheduler API and cycle fencing, HA-HACS-04's shared image resources, and HA-HACS-05's camera/diagnostic projections. Do not silently extend V1 contracts or claim this rough draft is implemented.
+
+**Next action:** After V1 release, decide whether “multiple devices,” “manual next display,” and “multiple views” are one feature or separate milestones; then freeze Store, config-flow, scheduler concurrency, and button semantics before writing an implementation-ready backlog item.
+blocked: HA-HACS-06 — rough draft is explicitly not implementation-ready, and its config-entry/Store migration, manual-refresh concurrency/cadence/timeout/button behavior, and shared-resource fairness contracts are unresolved; tried: evaluated the candidate scope and acceptance sketch for work independent of those decisions, but every implementation and test slice depends on at least one open contract; unblock: after HA-HACS-05 passes clean-install/release checks, decide feature splitting and freeze the config-entry, Store migration/rollback, scheduler/button, timeout/cadence, and resource-fairness semantics in an implementation-ready backlog item.
