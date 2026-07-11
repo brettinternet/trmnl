@@ -287,6 +287,7 @@ If standalone non-HA support returns, create a separate bridge plan rather than 
 ### HA-HACS-01 — dedicated integration bootstrap, config flow, Store adapter, and pending identity
 
 **Status / start condition:** Implementation-ready and first in the HA-HACS sequence. Start by creating or reserving the dedicated public repository `brettinternet/home-assistant-larapaper-bridge`; this work is not implemented in the current recipes repository. No Larapaper network or provisioning request is permitted in this item.
+**Completed task:** Repository bootstrap — dedicated public repository exists at `https://github.com/brettinternet/home-assistant-larapaper-bridge`; package layout, minimum `0.1.0` manifest, and focused pytest harness committed as `fcd38e0` and `4e61193`.
 
 **Goal / product intent:** Bootstrap one native Home Assistant `larapaper_bridge` integration and its test harness. Collect and persist validated configuration plus a stable synthetic device identity so a flow interrupted after persistence can resume with the same MAC. Leave all network, lifecycle, polling, image, and release behavior to later ordered items.
 
