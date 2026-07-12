@@ -5,5 +5,7 @@
 "aqua:go-task/task" = "latest"
 "aqua:jqlang/jq" = "latest"
 "conda:imagemagick" = "latest"
+node = "latest"
 bun = "latest"
 direnv = "latest"
+"npm:pyright" = "latest"
