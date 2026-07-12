@@ -1,7 +1,7 @@
 {% assign current_aqi = data.current.us_aqi | plus: 0 %}
 {% assign current_available = false %}
 {% assign category = "Unavailable" %}
-{% if data.current.us_aqi != nil and data.current.us_aqi != blank and current_aqi >= 0 %}
+{% if data.current.us_aqi != nil and data.current.us_aqi != blank and data.current.us_aqi == current_aqi and current_aqi >= 0 %}
   {% assign current_available = true %}
   {% if current_aqi <= 50 %}
     {% assign category = "Good" %}
@@ -38,7 +38,7 @@
     {% assign hourly_value = data.hourly.us_aqi[i] %}
     {% if hourly_value != nil and hourly_value != blank %}
       {% assign numeric_hourly_value = hourly_value | plus: 0 %}
-      {% if numeric_hourly_value >= 0 and numeric_hourly_value > day_max %}
+      {% if hourly_value == numeric_hourly_value and numeric_hourly_value >= 0 and numeric_hourly_value > day_max %}
         {% assign day_max = numeric_hourly_value %}
       {% endif %}
     {% endif %}
