@@ -3,7 +3,7 @@ name: Weather History
 strategy: polling
 polling_verb: get
 polling_url: |
-  https://historical-forecast-api.open-meteo.com/v1/forecast?latitude={{ latitude | default: 33.03 }}&longitude={{ longitude | default: -84.94 }}&past_days=365&forecast_days=7&daily=temperature_2m_mean,temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,precipitation_probability_max&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto&temperature_unit={{ temp_unit | default: 'fahrenheit' }}&wind_speed_unit={{ wind_unit | default: 'mph' }}&precipitation_unit={{ precipitation_unit | default: 'inch' }}
+  https://historical-forecast-api.open-meteo.com/v1/forecast?latitude={{ latitude | default: 33.03 }}&longitude={{ longitude | default: -84.94 }}&past_days=365&forecast_days=7&daily=temperature_2m_mean,temperature_2m_max,temperature_2m_min&current=temperature_2m,weather_code&timezone=auto&temperature_unit={{ temp_unit | default: 'fahrenheit' }}
 refresh_interval: 180
 no_screen_padding: "yes"
 dark_mode: "no"
@@ -25,14 +25,6 @@ custom_fields:
     description: Your location's longitude.
     placeholder: "-84.94"
     help_text: 'Search for your location at <a href="https://open-meteo.com/en/docs/geocoding-api">Open-Meteo Geocoding</a> and copy the longitude.'
-  - keyname: location_name
-    field_type: string
-    type: string
-    optional: true
-    name: Location Label
-    label: Location Label
-    placeholder: Home
-    description: A short name shown above the current conditions.
   - keyname: temp_unit
     field_type: select
     type: string
@@ -43,21 +35,3 @@ custom_fields:
     options:
       - Celsius: celsius
       - Fahrenheit: fahrenheit
-  - keyname: wind_unit
-    field_type: select
-    type: string
-    name: Wind Speed Unit
-    label: Wind Speed Unit
-    default: mph
-    options:
-      - km/h: kmh
-      - mph: mph
-  - keyname: precipitation_unit
-    field_type: select
-    type: string
-    name: Precipitation Unit
-    label: Precipitation Unit
-    default: inch
-    options:
-      - Millimetres: mm
-      - Inches: inch

@@ -1,7 +1,5 @@
-{% assign custom_fields = trmnl.plugin_settings.custom_fields_values %}
-{% assign location_name = custom_fields.location_name | default: config.location_name | default: "Weather" | strip %}
+{% assign degree = data.current_units.temperature_2m | slice: 0, 1 | default: "°" %}
 {% assign current_temp = data.current.temperature_2m | round %}
-{% assign apparent_temp = data.current.apparent_temperature | round %}
 {% assign current_code = data.current.weather_code | plus: 0 %}
 {% assign condition = "Clear" %}
 {% if current_code == 1 %}
@@ -113,28 +111,15 @@
 {% assign peak_low_label_y = peak_low_y | plus: 16 %}
 {% if peak_low_label_y > 225 %}{% assign peak_low_label_y = peak_low_y | minus: 8 %}{% endif %}
 
-{% assign today_high = data.daily.temperature_2m_max[today_index] | round %}
-{% assign today_low = data.daily.temperature_2m_min[today_index] | round %}
-{% assign rain_chance = data.daily.precipitation_probability_max[today_index] | round %}
-{% assign degree = data.current_units.temperature_2m | slice: 0, 1 | default: "°" %}
-{% assign wind_unit = custom_fields.wind_unit | default: config.wind_unit | default: "mph" %}
-{% assign wind_label = wind_unit %}
-{% if wind_unit == "kmh" %}{% assign wind_label = "km/h" %}{% endif %}
 
 <div class="view view--full weather-history">
   <style>
-    .weather-history { box-sizing: border-box; color: #111; display: grid; gap: 22px; grid-template-columns: 190px 1fr; height: 100%; padding: 34px 38px 26px; width: 100%; }
-    .weather-history__current { align-self: center; border-right: 2px solid #d4d4d4; padding-right: 24px; text-align: center; }
-    .weather-history__location { font-size: 15px; font-weight: 700; letter-spacing: .08em; margin-bottom: 18px; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-    .weather-history__temp { font-size: 78px; font-weight: 400; letter-spacing: -.08em; line-height: .85; }
-    .weather-history__condition { font-size: 19px; font-weight: 800; margin-top: 13px; }
-    .weather-history__range { font-size: 16px; font-weight: 700; margin-top: 8px; }
-    .weather-history__facts { color: #555; display: grid; font-size: 12px; font-weight: 700; gap: 5px; margin-top: 20px; }
+    .weather-history { box-sizing: border-box; color: #111; display: grid; gap: 32px; grid-template-columns: 170px 1fr; height: 100%; padding: 38px 42px; width: 100%; }
+    .weather-history__current { align-self: center; border-right: 1px solid #d1d1d1; padding: 30px 32px 30px 0; text-align: center; }
+    .weather-history__temp { font-size: 84px; font-weight: 400; letter-spacing: -.09em; line-height: .82; }
+    .weather-history__condition { color: #333; font-size: 17px; font-weight: 700; margin-top: 18px; }
     .weather-history__chart { align-self: center; min-width: 0; }
-    .weather-history__heading { align-items: baseline; display: flex; justify-content: space-between; margin: 0 12px 6px 30px; }
-    .weather-history__title { font-size: 19px; font-weight: 900; }
-    .weather-history__legend { color: #666; font-size: 11px; font-weight: 700; }
-    .weather-history svg { display: block; height: 250px; overflow: visible; width: 100%; }
+    .weather-history svg { display: block; height: 280px; overflow: visible; width: 100%; }
     .weather-history__history-mean { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
     .weather-history__history-bound { fill: none; stroke: #aaa; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
     .weather-history__forecast { fill: none; stroke: #555; stroke-dasharray: 4 4; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
@@ -142,27 +127,16 @@
     .weather-history__today { stroke: #999; stroke-dasharray: 2 4; stroke-width: 1; }
     .weather-history__peak { fill: #111; }
     .weather-history__peak-label { fill: #111; font-size: 12px; font-weight: 900; }
-    .weather-history__axis-label { fill: #666; font-size: 11px; font-weight: 700; }
     .weather-history__error { align-items: center; display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center; text-align: center; width: 100%; }
   </style>
 
   {% if data.current.temperature_2m and data.daily.time %}
     <section class="weather-history__current">
-      <div class="weather-history__location">{{ location_name }}</div>
       <div class="weather-history__temp">{{ current_temp }}{{ degree }}</div>
       <div class="weather-history__condition">{{ condition }}</div>
-      <div class="weather-history__range">{{ today_high }}{{ degree }} / {{ today_low }}{{ degree }}</div>
-      <div class="weather-history__facts">
-        <span>Feels {{ apparent_temp }}{{ degree }} · humidity {{ data.current.relative_humidity_2m | round }}%</span>
-        <span>Wind {{ data.current.wind_speed_10m | round }} {{ wind_label }} · rain {{ rain_chance }}%</span>
-      </div>
     </section>
 
     <section class="weather-history__chart">
-      <div class="weather-history__heading">
-        <span class="weather-history__title">A year of temperature</span>
-        <span class="weather-history__legend">daily mean · high / low · 7-day outlook</span>
-      </div>
       <svg viewBox="0 0 760 250" role="img" aria-label="Daily mean, high, and low temperatures over the past year with a seven day forecast">
         <rect class="weather-history__forecast-zone" x="{{ today_x }}" y="12" width="{{ 730 | minus: today_x }}" height="210" rx="3" />
         <polyline class="weather-history__history-bound" points="{{ history_high_points }}" />
@@ -175,9 +149,6 @@
         <text class="weather-history__peak-label" x="{{ peak_high_label_x }}" y="{{ peak_high_label_y }}" text-anchor="{{ peak_high_anchor }}">{{ peak_high | round }}{{ degree }} · {{ data.daily.time[peak_high_index] | date: "%b" }}</text>
         <circle class="weather-history__peak" cx="{{ peak_low_x }}" cy="{{ peak_low_y }}" r="3.5" />
         <text class="weather-history__peak-label" x="{{ peak_low_label_x }}" y="{{ peak_low_label_y }}" text-anchor="{{ peak_low_anchor }}">{{ peak_low | round }}{{ degree }} · {{ data.daily.time[peak_low_index] | date: "%b" }}</text>
-        <text class="weather-history__axis-label" x="30" y="244">{{ data.daily.time[0] | date: "%b %Y" }}</text>
-        <text class="weather-history__axis-label" x="{{ today_x | minus: 5 }}" y="244" text-anchor="end">Today</text>
-        <text class="weather-history__axis-label" x="730" y="244" text-anchor="end">Forecast</text>
       </svg>
     </section>
   {% else %}

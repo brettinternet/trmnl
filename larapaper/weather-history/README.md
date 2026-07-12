@@ -12,10 +12,7 @@ Shows current Open-Meteo conditions beside a minimal temperature chart spanning 
 ## Configuration
 
 - `latitude` and `longitude`: coordinates accepted by Open-Meteo. Defaults are `33.03`, `-84.94`.
-- `location_name`: optional short display label.
 - `temp_unit`: `fahrenheit` or `celsius`.
-- `wind_unit`: `mph` or `kmh`.
-- `precipitation_unit`: `inch` or `mm`.
 
 Use the [Open-Meteo Geocoding API](https://open-meteo.com/en/docs/geocoding-api) to resolve a place name to coordinates. LaraPaper polling accepts one URL, so the recipe uses Open-Meteo's Historical Forecast endpoint: it returns current conditions, reconstructed forecast-model history, and the seven-day outlook in one response.
 
@@ -24,8 +21,6 @@ The plugin refreshes every three hours. A year-long response can take longer tha
 ## Data shown
 
 - Current temperature and WMO weather condition
-- Today's high and low
-- Apparent temperature, relative humidity, wind, and maximum precipitation probability
 - Daily mean, maximum, and minimum temperatures for the previous 365 days
 - Projected maximum and minimum temperatures for the next seven days
 
