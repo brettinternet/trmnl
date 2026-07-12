@@ -1,6 +1,6 @@
 {% assign degree = data.current_units.temperature_2m | slice: 0, 1 | default: "°" %}
 {% assign current_temp = data.current.temperature_2m | round %}
-{% assign current_code = data.current.weather_code | plus: 0 %}
+{% assign current_code = data.current.weather_code %}
 {% assign condition = "Conditions unavailable" %}
 {% if current_code == 0 %}
   {% assign condition = "Clear" %}
@@ -22,7 +22,7 @@
   {% assign condition = "Showers" %}
 {% elsif current_code >= 85 and current_code <= 86 %}
   {% assign condition = "Snow showers" %}
-{% elsif current_code >= 95 %}
+{% elsif current_code == 95 or current_code == 96 or current_code == 99 %}
   {% assign condition = "Thunderstorm" %}
 {% endif %}
 
