@@ -18,7 +18,7 @@
   {% endif %}
 {% endif %}
 
-{% assign today_date = data.current.time | date: "%Y-%m-%d" %}
+{% assign today_date = data.current.time | slice: 0, 10 %}
 {% assign daily_dates_text = "" %}
 {% assign daily_values_text = "" %}
 {% assign current_day = "" %}
@@ -26,7 +26,7 @@
 {% assign hourly_last = data.hourly.time.size | minus: 1 %}
 {% if hourly_last >= 0 %}
   {% for i in (0..hourly_last) %}
-    {% assign day = data.hourly.time[i] | date: "%Y-%m-%d" %}
+    {% assign day = data.hourly.time[i] | slice: 0, 10 %}
     {% if day != current_day %}
       {% if current_day != "" %}
         {% assign daily_dates_text = daily_dates_text | append: current_day | append: "|" %}
@@ -87,9 +87,9 @@
 {% if chart_span < 1 %}{% assign chart_span = 1 %}{% endif %}
 
 {% assign history_count = today_index %}
-{% assign forecast_count = daily_count | minus: today_index %}
+{% assign forecast_count = daily_count | minus: today_index | plus: 1 %}
 {% assign history_last_index = history_count | minus: 1 %}
-{% assign forecast_last_index = daily_count | minus: 1 %}
+{% assign forecast_last_index = daily_count %}
 {% assign forecast_last_offset = forecast_count | minus: 1 %}
 {% assign history_points = "" %}
 {% assign forecast_points = "" %}
@@ -99,7 +99,7 @@
     {% if daily_values[i] != blank and daily_value >= 0 %}
       {% assign remainder = i | modulo: 2 %}
       {% assign should_plot = false %}
-      {% if remainder == 0 or i == peak_index or i == history_last_index or i == today_index or i == forecast_last_index %}
+      {% if i >= today_index or remainder == 0 or i == peak_index or i == history_last_index %}
         {% assign should_plot = true %}
       {% endif %}
       {% if should_plot %}
