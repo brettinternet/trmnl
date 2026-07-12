@@ -1,30 +1,4 @@
 {% assign degree = data.current_units.temperature_2m | slice: 0, 1 | default: "°" %}
-{% assign current_temp = data.current.temperature_2m | round %}
-{% assign current_code = data.current.weather_code %}
-{% assign condition = "Conditions unavailable" %}
-{% if current_code == 0 %}
-  {% assign condition = "Clear" %}
-{% elsif current_code == 1 %}
-  {% assign condition = "Mostly clear" %}
-{% elsif current_code == 2 %}
-  {% assign condition = "Partly cloudy" %}
-{% elsif current_code == 3 %}
-  {% assign condition = "Overcast" %}
-{% elsif current_code == 45 or current_code == 48 %}
-  {% assign condition = "Fog" %}
-{% elsif current_code >= 51 and current_code <= 57 %}
-  {% assign condition = "Drizzle" %}
-{% elsif current_code >= 61 and current_code <= 67 %}
-  {% assign condition = "Rain" %}
-{% elsif current_code >= 71 and current_code <= 77 %}
-  {% assign condition = "Snow" %}
-{% elsif current_code >= 80 and current_code <= 82 %}
-  {% assign condition = "Showers" %}
-{% elsif current_code >= 85 and current_code <= 86 %}
-  {% assign condition = "Snow showers" %}
-{% elsif current_code == 95 or current_code == 96 or current_code == 99 %}
-  {% assign condition = "Thunderstorm" %}
-{% endif %}
 
 {% assign point_count = data.daily.time.size | minus: 1 %}
 {% assign today_date = data.current.time | slice: 0, 10 %}
@@ -35,6 +9,8 @@
   {% endif %}
 {% endfor %}
 {% assign history_quarter = today_index | divided_by: 4 %}
+{% assign today_high = data.daily.temperature_2m_max[today_index] | plus: 0 %}
+{% assign today_low = data.daily.temperature_2m_min[today_index] | plus: 0 %}
 {% if history_quarter < 1 %}{% assign history_quarter = 1 %}{% endif %}
 {% assign quarter_two_end = history_quarter | times: 2 %}
 {% assign quarter_four_start = history_quarter | times: 3 %}
@@ -49,6 +25,10 @@
 {% assign spring_peak = -9999 %}
 {% assign autumn_peak_index = history_quarter %}
 {% assign spring_peak_index = quarter_four_start %}
+{% assign autumn_valley = 9999 %}
+{% assign spring_valley = 9999 %}
+{% assign autumn_valley_index = history_quarter %}
+{% assign spring_valley_index = quarter_four_start %}
 {% for i in (0..372) %}
   {% if i <= point_count %}
     {% assign high = data.daily.temperature_2m_max[i] | plus: 0 %}
@@ -71,6 +51,14 @@
       {% assign spring_peak = high %}
       {% assign spring_peak_index = i %}
     {% endif %}
+    {% if i >= history_quarter and i < quarter_two_end and low < autumn_valley %}
+      {% assign autumn_valley = low %}
+      {% assign autumn_valley_index = i %}
+    {% endif %}
+    {% if i >= quarter_four_start and i < today_index and low < spring_valley %}
+      {% assign spring_valley = low %}
+      {% assign spring_valley_index = i %}
+    {% endif %}
   {% endif %}
 {% endfor %}
 {% assign chart_span = chart_max | minus: chart_min %}
@@ -84,7 +72,7 @@
 {% for i in (0..372) %}
   {% if i <= point_count %}
     {% assign remainder = i | modulo: 7 %}
-    {% if remainder == 0 or i >= today_index or i == peak_high_index or i == peak_low_index or i == autumn_peak_index or i == spring_peak_index %}
+    {% if remainder == 0 or i >= today_index or i == peak_high_index or i == peak_low_index or i == autumn_peak_index or i == spring_peak_index or i == autumn_valley_index or i == spring_valley_index %}
       {% if i < today_index %}
         {% assign x = i | times: 640 | divided_by: today_index | plus: 30 %}
       {% else %}
@@ -122,6 +110,20 @@
 {% assign spring_peak_x = spring_peak_index | times: 640 | divided_by: today_index | plus: 30 %}
 {% assign autumn_peak_y = chart_max | minus: autumn_peak | times: 190 | divided_by: chart_span | plus: 22 %}
 {% assign spring_peak_y = chart_max | minus: spring_peak | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign autumn_valley_x = autumn_valley_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign spring_valley_x = spring_valley_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign autumn_valley_y = chart_max | minus: autumn_valley | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign spring_valley_y = chart_max | minus: spring_valley | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign autumn_valley_label_y = autumn_valley_y | plus: 16 %}
+{% if autumn_valley_label_y > 225 %}{% assign autumn_valley_label_y = autumn_valley_y | minus: 8 %}{% endif %}
+{% assign spring_valley_label_y = spring_valley_y | plus: 16 %}
+{% if spring_valley_label_y > 225 %}{% assign spring_valley_label_y = spring_valley_y | minus: 8 %}{% endif %}
+{% assign autumn_valley_anchor = "start" %}
+{% assign autumn_valley_label_x = autumn_valley_x | plus: 7 %}
+{% if autumn_valley_x > 620 %}{% assign autumn_valley_anchor = "end" %}{% assign autumn_valley_label_x = autumn_valley_x | minus: 7 %}{% endif %}
+{% assign spring_valley_anchor = "start" %}
+{% assign spring_valley_label_x = spring_valley_x | plus: 7 %}
+{% if spring_valley_x > 620 %}{% assign spring_valley_anchor = "end" %}{% assign spring_valley_label_x = spring_valley_x | minus: 7 %}{% endif %}
 {% assign autumn_peak_label_y = autumn_peak_y | plus: 16 %}
 {% if autumn_peak_label_y > 225 %}{% assign autumn_peak_label_y = autumn_peak_y | minus: 8 %}{% endif %}
 {% assign spring_peak_label_y = spring_peak_y | minus: 8 %}
@@ -142,8 +144,8 @@
   <style>
     .weather-history { box-sizing: border-box; color: #111; display: grid; gap: 32px; grid-template-columns: 170px 1fr; height: 100%; padding: 38px 42px; width: 100%; }
     .weather-history__current { align-self: center; border-right: 1px solid #d1d1d1; padding: 30px 32px 30px 0; text-align: center; }
-    .weather-history__temp { font-size: 84px; font-weight: 400; letter-spacing: -.09em; line-height: .82; }
-    .weather-history__condition { color: #333; font-size: 17px; font-weight: 700; margin-top: 18px; }
+    .weather-history__title { color: #333; font-size: 15px; font-weight: 700; letter-spacing: .04em; margin-bottom: 12px; }
+    .weather-history__temp { font-size: 48px; font-weight: 400; letter-spacing: -.09em; line-height: .82; white-space: nowrap; }
     .weather-history__chart { align-self: center; min-width: 0; }
     .weather-history svg { display: block; height: 280px; overflow: visible; width: 100%; }
     .weather-history__history-mean { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
@@ -153,13 +155,15 @@
     .weather-history__today { stroke: #999; stroke-dasharray: 2 4; stroke-width: 1; }
     .weather-history__peak { fill: #111; }
     .weather-history__peak-label { fill: #111; font-size: 12px; font-weight: 900; }
+    .weather-history__valley { fill: #fff; stroke: #111; stroke-width: 1.5; }
+    .weather-history__valley-label { fill: #444; font-size: 11px; font-weight: 800; }
     .weather-history__error { align-items: center; display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center; text-align: center; width: 100%; }
   </style>
 
-  {% if data.current.temperature_2m and data.daily.time %}
+  {% if data.current.time and data.daily.time and data.daily.temperature_2m_max and data.daily.temperature_2m_min %}
     <section class="weather-history__current">
-      <div class="weather-history__temp">{{ current_temp }}{{ degree }}</div>
-      <div class="weather-history__condition">{{ condition }}</div>
+      <div class="weather-history__title">Temperature</div>
+      <div class="weather-history__temp">{{ today_high | round }}{{ degree }} / {{ today_low | round }}{{ degree }}</div>
     </section>
 
     <section class="weather-history__chart">
@@ -172,13 +176,21 @@
         <polyline class="weather-history__forecast" points="{{ forecast_low_points }}" />
         <line class="weather-history__today" x1="{{ today_x }}" y1="12" x2="{{ today_x }}" y2="222" />
         <circle class="weather-history__peak" cx="{{ peak_high_x }}" cy="{{ peak_high_y }}" r="3.5" />
-        <text class="weather-history__peak-label" x="{{ peak_high_label_x }}" y="{{ peak_high_label_y }}" text-anchor="{{ peak_high_anchor }}">{{ peak_high | round }}{{ degree }} · {{ data.daily.time[peak_high_index] | append: "T12:00" | date: "%b" }}</text>
+        <text class="weather-history__peak-label" x="{{ peak_high_label_x }}" y="{{ peak_high_label_y }}" text-anchor="{{ peak_high_anchor }}">{{ peak_high | round }}{{ degree }} · {{ data.daily.time[peak_high_index] | append: "T12:00" | date: "%b %d" }}</text>
         <circle class="weather-history__peak" cx="{{ autumn_peak_x }}" cy="{{ autumn_peak_y }}" r="3.5" />
-        <text class="weather-history__peak-label" x="{{ autumn_peak_x | plus: 7 }}" y="{{ autumn_peak_label_y }}">{{ autumn_peak | round }}{{ degree }} · {{ data.daily.time[autumn_peak_index] | append: "T12:00" | date: "%b" }}</text>
+        <text class="weather-history__peak-label" x="{{ autumn_peak_x | plus: 7 }}" y="{{ autumn_peak_label_y }}">{{ autumn_peak | round }}{{ degree }} · {{ data.daily.time[autumn_peak_index] | append: "T12:00" | date: "%b %d" }}</text>
         <circle class="weather-history__peak" cx="{{ spring_peak_x }}" cy="{{ spring_peak_y }}" r="3.5" />
-        <text class="weather-history__peak-label" x="{{ spring_peak_x | minus: 7 }}" y="{{ spring_peak_label_y }}" text-anchor="end">{{ spring_peak | round }}{{ degree }} · {{ data.daily.time[spring_peak_index] | append: "T12:00" | date: "%b" }}</text>
+        <text class="weather-history__peak-label" x="{{ spring_peak_x | minus: 7 }}" y="{{ spring_peak_label_y }}" text-anchor="end">{{ spring_peak | round }}{{ degree }} · {{ data.daily.time[spring_peak_index] | append: "T12:00" | date: "%b %d" }}</text>
         <circle class="weather-history__peak" cx="{{ peak_low_x }}" cy="{{ peak_low_y }}" r="3.5" />
-        <text class="weather-history__peak-label" x="{{ peak_low_label_x }}" y="{{ peak_low_label_y }}" text-anchor="{{ peak_low_anchor }}">{{ peak_low | round }}{{ degree }} · {{ data.daily.time[peak_low_index] | append: "T12:00" | date: "%b" }}</text>
+        <text class="weather-history__peak-label" x="{{ peak_low_label_x }}" y="{{ peak_low_label_y }}" text-anchor="{{ peak_low_anchor }}">{{ peak_low | round }}{{ degree }} · {{ data.daily.time[peak_low_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% if autumn_valley < 9999 and autumn_valley_index < today_index and autumn_valley_index != peak_low_index %}
+          <circle class="weather-history__valley" cx="{{ autumn_valley_x }}" cy="{{ autumn_valley_y }}" r="3.5" />
+          <text class="weather-history__valley-label" x="{{ autumn_valley_label_x }}" y="{{ autumn_valley_label_y }}" text-anchor="{{ autumn_valley_anchor }}">{{ autumn_valley | round }}{{ degree }} · {{ data.daily.time[autumn_valley_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% endif %}
+        {% if spring_valley < 9999 and spring_valley_index < today_index and spring_valley_index != peak_low_index and spring_valley_index != autumn_valley_index %}
+          <circle class="weather-history__valley" cx="{{ spring_valley_x }}" cy="{{ spring_valley_y }}" r="3.5" />
+          <text class="weather-history__valley-label" x="{{ spring_valley_label_x }}" y="{{ spring_valley_label_y }}" text-anchor="{{ spring_valley_anchor }}">{{ spring_valley | round }}{{ degree }} · {{ data.daily.time[spring_valley_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% endif %}
       </svg>
     </section>
   {% else %}

@@ -119,6 +119,7 @@
   <style>
     .rainfall-history { box-sizing: border-box; color: #111; display: grid; gap: 32px; grid-template-columns: 190px 1fr; height: 100%; padding: 38px 42px; width: 100%; }
     .rainfall-history__total { align-self: center; border-right: 1px solid #d1d1d1; padding: 30px 32px 30px 0; text-align: center; }
+    .rainfall-history__title { color: #333; font-size: 15px; font-weight: 700; letter-spacing: .04em; margin-bottom: 12px; }
     .rainfall-history__value { font-size: 76px; font-weight: 400; letter-spacing: -.09em; line-height: .84; white-space: nowrap; }
     .rainfall-history__descriptor { color: #333; font-size: 17px; font-weight: 700; margin-top: 18px; }
     .rainfall-history__chart { align-self: center; min-width: 0; }
@@ -134,6 +135,7 @@
 
   {% if history_count > 0 %}
     <section class="rainfall-history__total">
+      <div class="rainfall-history__title">Rain</div>
       <div class="rainfall-history__value">{{ history_total | round: 1 }} {{ unit_label }}</div>
       <div class="rainfall-history__descriptor">{{ rainy_days }} rainy days</div>
     </section>
