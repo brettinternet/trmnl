@@ -22,6 +22,7 @@ The plugin refreshes every three hours. AQI is model-derived (not a station obse
 - Current US AQI and its EPA category, or `Unavailable` when the current value is missing.
 - Historical daily maximum US AQI and a seven-day forecast daily maximum line.
 - Three spaced labels for the worst historical daily maximum in each third of the chart, showing AQI and month/day.
+- Two lower reference labels mark the lowest daily maximum in each half of the historical chart; hollow markers distinguish these valleys from the filled high markers.
 
 The documented Air Quality API range for this recipe is `past_days=92` and `forecast_days=7`. A default request contains 92 past local days and a seven-day forecast beginning on the current local date (2,376 hourly samples at the default coordinates); this is a rolling model-derived span, not a station-observation record.
 
