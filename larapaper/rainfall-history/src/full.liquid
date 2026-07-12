@@ -1,0 +1,128 @@
+{% assign unit_name = data.daily_units.precipitation_sum | default: "inch" %}
+{% assign unit_label = "in" %}
+{% if unit_name == "mm" %}{% assign unit_label = "mm" %}{% endif %}
+{% assign today_index = -1 %}
+{% assign point_count = -1 %}
+{% assign history_total = 0 %}
+{% assign history_count = 0 %}
+{% assign peak_value = 0 %}
+{% assign peak_index = 0 %}
+{% assign chart_max = 0 %}
+{% assign history_points = "" %}
+{% assign forecast_points = "" %}
+{% assign history_span = 1 %}
+{% assign forecast_day_count = 0 %}
+{% assign forecast_span = 1 %}
+
+{% if data.daily and data.daily.time and data.daily.precipitation_sum and data.current.time %}
+  {% assign point_count = data.daily.time.size | minus: 1 %}
+  {% assign today_date = data.current.time | slice: 0, 10 %}
+  {% for i in (0..point_count) %}
+    {% if i <= point_count and data.daily.time[i] == today_date %}
+      {% assign today_index = i %}
+    {% endif %}
+  {% endfor %}
+  {% if today_index >= 0 %}
+    {% assign history_span = today_index %}
+    {% if history_span < 1 %}{% assign history_span = 1 %}{% endif %}
+    {% assign forecast_day_count = point_count | minus: today_index %}
+    {% assign forecast_span = forecast_day_count %}
+    {% if forecast_span < 1 %}{% assign forecast_span = 1 %}{% endif %}
+    {% for i in (0..point_count) %}
+      {% if i <= point_count %}
+        {% assign rainfall = data.daily.precipitation_sum[i] %}
+        {% if rainfall %}
+          {% assign rainfall_value = rainfall | plus: 0 %}
+          {% if rainfall_value > chart_max %}{% assign chart_max = rainfall_value %}{% endif %}
+          {% if i < today_index %}
+            {% assign history_total = history_total | plus: rainfall_value %}
+            {% assign history_count = history_count | plus: 1 %}
+            {% if rainfall_value > peak_value %}
+              {% assign peak_value = rainfall_value %}
+              {% assign peak_index = i %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endif %}
+
+{% assign chart_span = chart_max %}
+{% if chart_span == 0 %}{% assign chart_span = 1 %}{% endif %}
+
+{% if history_count > 0 %}
+  {% for i in (0..point_count) %}
+    {% if i <= point_count %}
+      {% assign rainfall = data.daily.precipitation_sum[i] %}
+      {% if rainfall %}
+        {% assign rainfall_value = rainfall | plus: 0 %}
+        {% if i < today_index %}
+          {% assign x = i | times: 640 | divided_by: history_span | plus: 20 %}
+        {% else %}
+          {% assign forecast_offset = i | minus: today_index %}
+          {% assign x = forecast_offset | times: 80 | divided_by: forecast_span | plus: 660 %}
+        {% endif %}
+        {% assign y_offset = rainfall_value | times: 198 | divided_by: chart_span %}
+        {% assign y = 232 | minus: y_offset %}
+        {% capture point %}{{ x }},{{ y }} {% endcapture %}
+        {% if i < today_index %}
+          {% assign history_points = history_points | append: point %}
+        {% else %}
+          {% assign forecast_points = forecast_points | append: point %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% assign peak_x = peak_index | times: 640 | divided_by: history_span | plus: 20 %}
+{% assign peak_y_offset = peak_value | times: 198 | divided_by: chart_span %}
+{% assign peak_y = 232 | minus: peak_y_offset %}
+{% assign peak_anchor = "start" %}
+{% assign peak_label_x = peak_x | plus: 8 %}
+{% if peak_x > 610 %}
+  {% assign peak_anchor = "end" %}
+  {% assign peak_label_x = peak_x | minus: 8 %}
+{% endif %}
+{% assign peak_label_y = peak_y | minus: 9 %}
+{% if peak_label_y < 14 %}{% assign peak_label_y = peak_y | plus: 17 %}{% endif %}
+
+<div class="view view--full rainfall-history">
+  <style>
+    .rainfall-history { box-sizing: border-box; color: #111; display: grid; gap: 32px; grid-template-columns: 190px 1fr; height: 100%; padding: 38px 42px; width: 100%; }
+    .rainfall-history__total { align-self: center; border-right: 1px solid #d1d1d1; padding: 30px 32px 30px 0; text-align: center; }
+    .rainfall-history__value { font-size: 76px; font-weight: 400; letter-spacing: -.09em; line-height: .84; white-space: nowrap; }
+    .rainfall-history__descriptor { color: #333; font-size: 17px; font-weight: 700; margin-top: 18px; }
+    .rainfall-history__chart { align-self: center; min-width: 0; }
+    .rainfall-history svg { display: block; height: 280px; overflow: visible; width: 100%; }
+    .rainfall-history__forecast-zone { fill: #ededed; }
+    .rainfall-history__baseline { stroke: #b8b8b8; stroke-width: 1; }
+    .rainfall-history__history { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+    .rainfall-history__forecast { fill: none; stroke: #666; stroke-dasharray: 5 5; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+    .rainfall-history__today { stroke: #999; stroke-dasharray: 2 4; stroke-width: 1; }
+    .rainfall-history__peak { fill: #111; }
+    .rainfall-history__peak-label { fill: #111; font-size: 12px; font-weight: 900; }
+  </style>
+
+  {% if history_count > 0 %}
+    <section class="rainfall-history__total">
+      <div class="rainfall-history__value">{{ history_total | round: 1 }} {{ unit_label }}</div>
+      <div class="rainfall-history__descriptor">365 days</div>
+    </section>
+
+    <section class="rainfall-history__chart">
+      <svg viewBox="0 0 760 250" role="img" aria-label="Daily rainfall history and forecast">
+        <rect class="rainfall-history__forecast-zone" x="660" y="14" width="80" height="218" rx="3" />
+        <line class="rainfall-history__baseline" x1="20" y1="232" x2="740" y2="232" />
+        <polyline class="rainfall-history__history" points="{{ history_points }}" />
+        <polyline class="rainfall-history__forecast" points="{{ forecast_points }}" />
+        <line class="rainfall-history__today" x1="660" y1="14" x2="660" y2="232" />
+        {% if peak_value > 0 %}
+          <circle class="rainfall-history__peak" cx="{{ peak_x }}" cy="{{ peak_y }}" r="3.5" />
+          <text class="rainfall-history__peak-label" x="{{ peak_label_x }}" y="{{ peak_label_y }}" text-anchor="{{ peak_anchor }}">{{ peak_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% endif %}
+      </svg>
+    </section>
+  {% endif %}
+</div>

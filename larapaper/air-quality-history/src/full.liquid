@@ -1,0 +1,175 @@
+{% assign current_aqi = data.current.us_aqi | plus: 0 %}
+{% assign current_available = false %}
+{% assign category = "Unavailable" %}
+{% if data.current.us_aqi != nil and data.current.us_aqi != blank and data.current.us_aqi == current_aqi and current_aqi >= 0 %}
+  {% assign current_available = true %}
+  {% if current_aqi <= 50 %}
+    {% assign category = "Good" %}
+  {% elsif current_aqi <= 100 %}
+    {% assign category = "Moderate" %}
+  {% elsif current_aqi <= 150 %}
+    {% assign category = "Unhealthy for sensitive groups" %}
+  {% elsif current_aqi <= 200 %}
+    {% assign category = "Unhealthy" %}
+  {% elsif current_aqi <= 300 %}
+    {% assign category = "Very unhealthy" %}
+  {% else %}
+    {% assign category = "Hazardous" %}
+  {% endif %}
+{% endif %}
+
+{% assign today_date = data.current.time | slice: 0, 10 %}
+{% assign daily_dates_text = "" %}
+{% assign daily_values_text = "" %}
+{% assign current_day = "" %}
+{% assign day_max = -1 %}
+{% assign hourly_last = data.hourly.time.size | minus: 1 %}
+{% if hourly_last >= 0 %}
+  {% for i in (0..hourly_last) %}
+    {% assign day = data.hourly.time[i] | slice: 0, 10 %}
+    {% if day != current_day %}
+      {% if current_day != "" %}
+        {% assign daily_dates_text = daily_dates_text | append: current_day | append: "|" %}
+        {% assign daily_values_text = daily_values_text | append: day_max | append: "|" %}
+      {% endif %}
+      {% assign current_day = day %}
+      {% assign day_max = -1 %}
+    {% endif %}
+    {% assign hourly_value = data.hourly.us_aqi[i] %}
+    {% if hourly_value != nil and hourly_value != blank %}
+      {% assign numeric_hourly_value = hourly_value | plus: 0 %}
+      {% if hourly_value == numeric_hourly_value and numeric_hourly_value >= 0 and numeric_hourly_value > day_max %}
+        {% assign day_max = numeric_hourly_value %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+  {% if current_day != "" %}
+    {% assign daily_dates_text = daily_dates_text | append: current_day | append: "|" %}
+    {% assign daily_values_text = daily_values_text | append: day_max | append: "|" %}
+  {% endif %}
+{% endif %}
+
+{% assign daily_dates = daily_dates_text | split: "|" %}
+{% assign daily_values = daily_values_text | split: "|" %}
+{% assign daily_count = daily_dates.size | minus: 1 %}
+{% assign today_index = daily_count %}
+{% if today_date != blank and daily_count > 0 %}
+  {% for i in (0..daily_count) %}
+    {% if daily_dates[i] == today_date %}
+      {% assign today_index = i %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% assign chart_min = 9999 %}
+{% assign chart_max = -1 %}
+{% assign peak_value = -1 %}
+{% assign peak_index = 0 %}
+{% assign has_series = false %}
+{% assign has_peak = false %}
+{% if daily_count > 0 %}
+  {% for i in (0..daily_count) %}
+    {% assign daily_value = daily_values[i] | plus: 0 %}
+    {% if daily_values[i] != blank and daily_value >= 0 %}
+      {% assign has_series = true %}
+      {% if daily_value < chart_min %}{% assign chart_min = daily_value %}{% endif %}
+      {% if daily_value > chart_max %}{% assign chart_max = daily_value %}{% endif %}
+      {% if i < today_index and daily_value > peak_value %}
+        {% assign peak_value = daily_value %}
+        {% assign peak_index = i %}
+        {% assign has_peak = true %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{% assign chart_span = chart_max | minus: chart_min %}
+{% if chart_span < 1 %}{% assign chart_span = 1 %}{% endif %}
+
+{% assign history_count = today_index %}
+{% assign forecast_count = daily_count | minus: today_index | plus: 1 %}
+{% assign history_last_index = history_count | minus: 1 %}
+{% assign forecast_last_index = daily_count %}
+{% assign forecast_last_offset = forecast_count | minus: 1 %}
+{% assign history_points = "" %}
+{% assign forecast_points = "" %}
+{% if daily_count > 0 %}
+  {% for i in (0..daily_count) %}
+    {% assign daily_value = daily_values[i] | plus: 0 %}
+    {% if daily_values[i] != blank and daily_value >= 0 %}
+      {% assign remainder = i | modulo: 2 %}
+      {% assign should_plot = false %}
+      {% if i >= today_index or remainder == 0 or i == peak_index or i == history_last_index %}
+        {% assign should_plot = true %}
+      {% endif %}
+      {% if should_plot %}
+        {% if i < today_index %}
+          {% if history_count > 1 %}
+            {% assign x = i | times: 640 | divided_by: history_last_index | plus: 30 %}
+          {% else %}
+            {% assign x = 30 %}
+          {% endif %}
+        {% elsif forecast_count > 1 %}
+          {% assign forecast_offset = i | minus: today_index %}
+          {% assign x = forecast_offset | times: 60 | divided_by: forecast_last_offset | plus: 670 %}
+        {% else %}
+          {% assign x = 670 %}
+        {% endif %}
+        {% assign y = chart_max | minus: daily_value | times: 190 | divided_by: chart_span | plus: 22 %}
+        {% capture point %}{{ x }},{{ y }} {% endcapture %}
+        {% if i < today_index %}
+          {% assign history_points = history_points | append: point %}
+        {% else %}
+          {% assign forecast_points = forecast_points | append: point %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% assign peak_x = 30 %}
+{% if history_count > 1 %}{% assign peak_x = peak_index | times: 640 | divided_by: history_last_index | plus: 30 %}{% endif %}
+{% assign peak_y = chart_max | minus: peak_value | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign peak_anchor = "start" %}
+{% assign peak_label_x = peak_x | plus: 8 %}
+{% if peak_x > 620 %}
+  {% assign peak_anchor = "end" %}
+  {% assign peak_label_x = peak_x | minus: 8 %}
+{% endif %}
+{% assign peak_label_y = peak_y | minus: 8 %}
+{% if peak_label_y < 14 %}{% assign peak_label_y = peak_y | plus: 16 %}{% endif %}
+
+<div class="view view--full air-quality-history">
+  <style>
+    .air-quality-history { box-sizing: border-box; color: #111; display: grid; gap: 32px; grid-template-columns: 170px 1fr; height: 100%; padding: 38px 42px; width: 100%; }
+    .air-quality-history__current { align-self: center; border-right: 1px solid #d1d1d1; padding: 30px 32px 30px 0; text-align: center; }
+    .air-quality-history__value { font-size: 84px; font-weight: 400; letter-spacing: -.09em; line-height: .82; }
+    .air-quality-history__category { color: #333; font-size: 17px; font-weight: 700; line-height: 1.15; margin-top: 18px; }
+    .air-quality-history__chart { align-self: center; min-width: 0; }
+    .air-quality-history svg { display: block; height: 280px; overflow: visible; width: 100%; }
+    .air-quality-history__history { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
+    .air-quality-history__forecast { fill: none; stroke: #666; stroke-dasharray: 4 4; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+    .air-quality-history__forecast-zone { fill: #ededed; }
+    .air-quality-history__today { stroke: #999; stroke-dasharray: 2 4; stroke-width: 1; }
+    .air-quality-history__peak { fill: #111; }
+    .air-quality-history__peak-label { fill: #111; font-size: 12px; font-weight: 900; }
+  </style>
+
+  <section class="air-quality-history__current">
+    <div class="air-quality-history__value">{% if current_available %}{{ current_aqi | round }}{% else %}—{% endif %}</div>
+    <div class="air-quality-history__category">{{ category }}</div>
+  </section>
+
+  <section class="air-quality-history__chart">
+    <svg viewBox="0 0 760 250" role="img">
+      {% if has_series and forecast_count > 0 %}<rect class="air-quality-history__forecast-zone" x="670" y="12" width="60" height="210" rx="3" />{% endif %}
+      {% if history_points != blank %}<polyline class="air-quality-history__history" points="{{ history_points }}" />{% endif %}
+      {% if forecast_points != blank %}<polyline class="air-quality-history__forecast" points="{{ forecast_points }}" />{% endif %}
+      {% if has_series and forecast_count > 0 %}<line class="air-quality-history__today" x1="670" y1="12" x2="670" y2="222" />{% endif %}
+      {% if has_peak %}
+        <circle class="air-quality-history__peak" cx="{{ peak_x }}" cy="{{ peak_y }}" r="3.5" />
+        <text class="air-quality-history__peak-label" x="{{ peak_label_x }}" y="{{ peak_label_y }}" text-anchor="{{ peak_anchor }}">{{ peak_value | round }} · {{ daily_dates[peak_index] | append: "T12:00" | date: "%b %d" }}</text>
+      {% endif %}
+    </svg>
+  </section>
+</div>

@@ -1,0 +1,37 @@
+---
+name: Rainfall History
+strategy: polling
+polling_verb: get
+polling_url: |
+  https://historical-forecast-api.open-meteo.com/v1/forecast?latitude={{ latitude | default: 33.03 }}&longitude={{ longitude | default: -84.94 }}&past_days=365&forecast_days=8&daily=precipitation_sum&current=precipitation&timezone=auto&precipitation_unit={{ precipitation_unit | default: 'inch' }}
+refresh_interval: 180
+no_screen_padding: "yes"
+dark_mode: "no"
+framework_version: latest
+custom_fields:
+  - keyname: latitude
+    field_type: string
+    type: string
+    name: Latitude
+    label: Latitude
+    description: Your location's latitude.
+    placeholder: "33.03"
+    help_text: 'Search for your location at <a href="https://open-meteo.com/en/docs/geocoding-api">Open-Meteo Geocoding</a> and copy the latitude.'
+  - keyname: longitude
+    field_type: string
+    type: string
+    name: Longitude
+    label: Longitude
+    description: Your location's longitude.
+    placeholder: "-84.94"
+    help_text: 'Search for your location at <a href="https://open-meteo.com/en/docs/geocoding-api">Open-Meteo Geocoding</a> and copy the longitude.'
+  - keyname: precipitation_unit
+    field_type: select
+    type: string
+    name: Precipitation Unit
+    label: Precipitation Unit
+    description: Choose inches or millimetres.
+    default: inch
+    options:
+      - Inches: inch
+      - Millimetres: mm
