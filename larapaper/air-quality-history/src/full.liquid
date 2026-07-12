@@ -239,11 +239,11 @@
         <circle class="air-quality-history__peak" cx="{{ peak_three_x }}" cy="{{ peak_three_y }}" r="3.5" />
         <text class="air-quality-history__peak-label" x="{{ peak_three_x | minus: 8 }}" y="{{ peak_three_label_y }}" text-anchor="end">{{ peak_three_value | round }} · {{ peak_three_date | append: "T12:00" | date: "%b %d" }}</text>
       {% endif %}
-      {% if valley_one_value < 9999 %}
+      {% if valley_one_value < 9999 and valley_one_index != peak_one_index and valley_one_index != peak_two_index and valley_one_index != peak_three_index %}
         <circle class="air-quality-history__valley" cx="{{ valley_one_x }}" cy="{{ valley_one_y }}" r="3.5" />
         <text class="air-quality-history__valley-label" x="{{ valley_one_x | plus: 8 }}" y="{{ valley_one_label_y }}">{{ valley_one_value | round }} · {{ valley_one_date | append: "T12:00" | date: "%b %d" }}</text>
       {% endif %}
-      {% if valley_two_value < 9999 %}
+      {% if valley_two_value < 9999 and valley_two_index != peak_one_index and valley_two_index != peak_two_index and valley_two_index != peak_three_index %}
         <circle class="air-quality-history__valley" cx="{{ valley_two_x }}" cy="{{ valley_two_y }}" r="3.5" />
         <text class="air-quality-history__valley-label" x="{{ valley_two_x | minus: 8 }}" y="{{ valley_two_label_y }}" text-anchor="end">{{ valley_two_value | round }} · {{ valley_two_date | append: "T12:00" | date: "%b %d" }}</text>
       {% endif %}
