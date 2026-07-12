@@ -1,0 +1,163 @@
+{% assign unit_name = data.daily_units.snowfall_sum | default: "inch" %}
+{% assign unit_label = "in" %}
+{% if unit_name == "cm" %}{% assign unit_label = "cm" %}{% endif %}
+{% assign snowy_threshold = 0.4 %}
+{% if unit_label == "cm" %}{% assign snowy_threshold = 1 %}{% endif %}
+{% assign today_index = -1 %}
+{% assign point_count = -1 %}
+{% assign history_total = 0 %}
+{% assign history_count = 0 %}
+{% assign snowy_days = 0 %}
+{% assign peak_one_value = 0 %}
+{% assign peak_two_value = 0 %}
+{% assign peak_three_value = 0 %}
+{% assign peak_one_index = 0 %}
+{% assign peak_two_index = 0 %}
+{% assign peak_three_index = 0 %}
+{% assign chart_max = 0 %}
+{% assign history_points = "" %}
+{% assign forecast_points = "" %}
+{% assign history_span = 1 %}
+{% assign forecast_day_count = 0 %}
+{% assign forecast_span = 1 %}
+
+{% if data.daily and data.daily.time and data.daily.snowfall_sum and data.current.time %}
+  {% assign point_count = data.daily.time.size | minus: 1 %}
+  {% assign today_date = data.current.time | slice: 0, 10 %}
+  {% for i in (0..point_count) %}
+    {% if i <= point_count and data.daily.time[i] == today_date %}
+      {% assign today_index = i %}
+    {% endif %}
+  {% endfor %}
+  {% if today_index >= 0 %}
+    {% assign history_span = today_index %}
+    {% if history_span < 1 %}{% assign history_span = 1 %}{% endif %}
+    {% assign history_segment = today_index | divided_by: 3 %}
+    {% if history_segment < 1 %}{% assign history_segment = 1 %}{% endif %}
+    {% assign segment_three_start = history_segment | times: 2 %}
+    {% assign forecast_day_count = point_count | minus: today_index %}
+    {% assign forecast_span = forecast_day_count %}
+    {% if forecast_span < 1 %}{% assign forecast_span = 1 %}{% endif %}
+    {% for i in (0..point_count) %}
+      {% if i <= point_count %}
+        {% assign snowfall = data.daily.snowfall_sum[i] %}
+        {% if snowfall %}
+          {% assign snowfall_value = snowfall | plus: 0 %}
+          {% if snowfall_value > chart_max %}{% assign chart_max = snowfall_value %}{% endif %}
+          {% if i < today_index %}
+            {% assign history_total = history_total | plus: snowfall_value %}
+            {% assign history_count = history_count | plus: 1 %}
+            {% if snowfall_value >= snowy_threshold %}
+              {% assign snowy_days = snowy_days | plus: 1 %}
+            {% endif %}
+            {% if i < history_segment %}
+              {% if snowfall_value > peak_one_value %}
+                {% assign peak_one_value = snowfall_value %}
+                {% assign peak_one_index = i %}
+              {% endif %}
+            {% elsif i < segment_three_start %}
+              {% if snowfall_value > peak_two_value %}
+                {% assign peak_two_value = snowfall_value %}
+                {% assign peak_two_index = i %}
+              {% endif %}
+            {% elsif snowfall_value > peak_three_value %}
+              {% assign peak_three_value = snowfall_value %}
+              {% assign peak_three_index = i %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endif %}
+
+{% assign chart_span = chart_max %}
+{% if chart_span == 0 %}{% assign chart_span = 1 %}{% endif %}
+
+{% if history_count > 0 %}
+  {% for i in (0..point_count) %}
+    {% if i <= point_count %}
+      {% assign snowfall = data.daily.snowfall_sum[i] %}
+      {% if snowfall %}
+        {% assign snowfall_value = snowfall | plus: 0 %}
+        {% if i < today_index %}
+          {% assign x = i | times: 640 | divided_by: history_span | plus: 20 %}
+        {% else %}
+          {% assign forecast_offset = i | minus: today_index %}
+          {% assign x = forecast_offset | times: 80 | divided_by: forecast_span | plus: 660 %}
+        {% endif %}
+        {% assign y_offset = snowfall_value | times: 198 | divided_by: chart_span %}
+        {% assign y = 232 | minus: y_offset %}
+        {% capture point %}{{ x }},{{ y }} {% endcapture %}
+        {% if i < today_index %}
+          {% assign history_points = history_points | append: point %}
+        {% else %}
+          {% assign forecast_points = forecast_points | append: point %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% assign peak_one_x = peak_one_index | times: 640 | divided_by: history_span | plus: 20 %}
+{% assign peak_two_x = peak_two_index | times: 640 | divided_by: history_span | plus: 20 %}
+{% assign peak_three_x = peak_three_index | times: 640 | divided_by: history_span | plus: 20 %}
+{% assign peak_one_y_offset = peak_one_value | times: 198 | divided_by: chart_span %}
+{% assign peak_two_y_offset = peak_two_value | times: 198 | divided_by: chart_span %}
+{% assign peak_three_y_offset = peak_three_value | times: 198 | divided_by: chart_span %}
+{% assign peak_one_y = 232 | minus: peak_one_y_offset %}
+{% assign peak_two_y = 232 | minus: peak_two_y_offset %}
+{% assign peak_three_y = 232 | minus: peak_three_y_offset %}
+{% assign peak_one_label_y = peak_one_y | minus: 9 %}
+{% if peak_one_label_y < 14 %}{% assign peak_one_label_y = peak_one_y | plus: 17 %}{% endif %}
+{% assign peak_two_label_y = peak_two_y | plus: 17 %}
+{% if peak_two_label_y > 230 %}{% assign peak_two_label_y = peak_two_y | minus: 9 %}{% endif %}
+{% assign peak_three_label_y = peak_three_y | minus: 9 %}
+{% if peak_three_label_y < 14 %}{% assign peak_three_label_y = peak_three_y | plus: 17 %}{% endif %}
+
+<div class="view view--full snowfall-history">
+  <style>
+    .snowfall-history { box-sizing: border-box; color: #111; display: grid; gap: 32px; grid-template-columns: 190px 1fr; height: 100%; padding: 38px 42px; width: 100%; }
+    .snowfall-history__total { align-self: center; border-right: 1px solid #d1d1d1; padding: 30px 32px 30px 0; text-align: center; }
+    .snowfall-history__value { font-size: 76px; font-weight: 400; letter-spacing: -.09em; line-height: .84; white-space: nowrap; }
+    .snowfall-history__descriptor { color: #333; font-size: 17px; font-weight: 700; margin-top: 18px; }
+    .snowfall-history__chart { align-self: center; min-width: 0; }
+    .snowfall-history svg { display: block; height: 280px; overflow: visible; width: 100%; }
+    .snowfall-history__forecast-zone { fill: #ededed; }
+    .snowfall-history__baseline { stroke: #b8b8b8; stroke-width: 1; }
+    .snowfall-history__history { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+    .snowfall-history__forecast { fill: none; stroke: #666; stroke-dasharray: 5 5; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+    .snowfall-history__today { stroke: #999; stroke-dasharray: 2 4; stroke-width: 1; }
+    .snowfall-history__peak { fill: #111; }
+    .snowfall-history__peak-label { fill: #111; font-size: 12px; font-weight: 900; }
+  </style>
+
+  {% if history_count > 0 %}
+    <section class="snowfall-history__total">
+      <div class="snowfall-history__value">{{ history_total | round: 1 }} {{ unit_label }}</div>
+      <div class="snowfall-history__descriptor">{{ snowy_days }} snowy days</div>
+    </section>
+
+    <section class="snowfall-history__chart">
+      <svg viewBox="0 0 760 250" role="img" aria-label="Daily snowfall history and forecast">
+        <rect class="snowfall-history__forecast-zone" x="660" y="14" width="80" height="218" rx="3" />
+        <line class="snowfall-history__baseline" x1="20" y1="232" x2="740" y2="232" />
+        <polyline class="snowfall-history__history" points="{{ history_points }}" />
+        <polyline class="snowfall-history__forecast" points="{{ forecast_points }}" />
+        <line class="snowfall-history__today" x1="660" y1="14" x2="660" y2="232" />
+        {% if peak_one_value > 0 %}
+          <circle class="snowfall-history__peak" cx="{{ peak_one_x }}" cy="{{ peak_one_y }}" r="3.5" />
+          <text class="snowfall-history__peak-label" x="{{ peak_one_x | plus: 8 }}" y="{{ peak_one_label_y }}">{{ peak_one_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_one_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% endif %}
+        {% if peak_two_value > 0 %}
+          <circle class="snowfall-history__peak" cx="{{ peak_two_x }}" cy="{{ peak_two_y }}" r="3.5" />
+          <text class="snowfall-history__peak-label" x="{{ peak_two_x | plus: 8 }}" y="{{ peak_two_label_y }}">{{ peak_two_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_two_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% endif %}
+        {% if peak_three_value > 0 %}
+          <circle class="snowfall-history__peak" cx="{{ peak_three_x }}" cy="{{ peak_three_y }}" r="3.5" />
+          <text class="snowfall-history__peak-label" x="{{ peak_three_x | minus: 8 }}" y="{{ peak_three_label_y }}" text-anchor="end">{{ peak_three_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_three_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% endif %}
+      </svg>
+    </section>
+  {% endif %}
+</div>
