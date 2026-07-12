@@ -2,7 +2,7 @@
 
 Import this directory as a LaraPaper recipe plugin archive.
 
-Shows current Open-Meteo conditions beside a minimal temperature chart spanning the previous 365 days and the next seven forecast days. The chart uses a strong daily-mean line, lighter daily high/low lines, labels only the historical maximum and minimum, and shades the forecast period.
+Shows current Open-Meteo conditions beside a minimal temperature chart spanning the previous 365 days and the next seven forecast days. The chart uses a strong daily-mean line, lighter daily high/low lines, four spaced seasonal peak labels, and a shaded forecast period.
 
 ## Files
 

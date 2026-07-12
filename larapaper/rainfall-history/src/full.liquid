@@ -1,12 +1,19 @@
 {% assign unit_name = data.daily_units.precipitation_sum | default: "inch" %}
 {% assign unit_label = "in" %}
 {% if unit_name == "mm" %}{% assign unit_label = "mm" %}{% endif %}
+{% assign rainy_threshold = 0.04 %}
+{% if unit_label == "mm" %}{% assign rainy_threshold = 1 %}{% endif %}
 {% assign today_index = -1 %}
 {% assign point_count = -1 %}
 {% assign history_total = 0 %}
 {% assign history_count = 0 %}
-{% assign peak_value = 0 %}
-{% assign peak_index = 0 %}
+{% assign rainy_days = 0 %}
+{% assign peak_one_value = 0 %}
+{% assign peak_two_value = 0 %}
+{% assign peak_three_value = 0 %}
+{% assign peak_one_index = 0 %}
+{% assign peak_two_index = 0 %}
+{% assign peak_three_index = 0 %}
 {% assign chart_max = 0 %}
 {% assign history_points = "" %}
 {% assign forecast_points = "" %}
@@ -25,6 +32,9 @@
   {% if today_index >= 0 %}
     {% assign history_span = today_index %}
     {% if history_span < 1 %}{% assign history_span = 1 %}{% endif %}
+    {% assign history_segment = today_index | divided_by: 3 %}
+    {% if history_segment < 1 %}{% assign history_segment = 1 %}{% endif %}
+    {% assign segment_three_start = history_segment | times: 2 %}
     {% assign forecast_day_count = point_count | minus: today_index %}
     {% assign forecast_span = forecast_day_count %}
     {% if forecast_span < 1 %}{% assign forecast_span = 1 %}{% endif %}
@@ -37,9 +47,22 @@
           {% if i < today_index %}
             {% assign history_total = history_total | plus: rainfall_value %}
             {% assign history_count = history_count | plus: 1 %}
-            {% if rainfall_value > peak_value %}
-              {% assign peak_value = rainfall_value %}
-              {% assign peak_index = i %}
+            {% if rainfall_value >= rainy_threshold %}
+              {% assign rainy_days = rainy_days | plus: 1 %}
+            {% endif %}
+            {% if i < history_segment %}
+              {% if rainfall_value > peak_one_value %}
+                {% assign peak_one_value = rainfall_value %}
+                {% assign peak_one_index = i %}
+              {% endif %}
+            {% elsif i < segment_three_start %}
+              {% if rainfall_value > peak_two_value %}
+                {% assign peak_two_value = rainfall_value %}
+                {% assign peak_two_index = i %}
+              {% endif %}
+            {% elsif rainfall_value > peak_three_value %}
+              {% assign peak_three_value = rainfall_value %}
+              {% assign peak_three_index = i %}
             {% endif %}
           {% endif %}
         {% endif %}
@@ -76,17 +99,21 @@
   {% endfor %}
 {% endif %}
 
-{% assign peak_x = peak_index | times: 640 | divided_by: history_span | plus: 20 %}
-{% assign peak_y_offset = peak_value | times: 198 | divided_by: chart_span %}
-{% assign peak_y = 232 | minus: peak_y_offset %}
-{% assign peak_anchor = "start" %}
-{% assign peak_label_x = peak_x | plus: 8 %}
-{% if peak_x > 610 %}
-  {% assign peak_anchor = "end" %}
-  {% assign peak_label_x = peak_x | minus: 8 %}
-{% endif %}
-{% assign peak_label_y = peak_y | minus: 9 %}
-{% if peak_label_y < 14 %}{% assign peak_label_y = peak_y | plus: 17 %}{% endif %}
+{% assign peak_one_x = peak_one_index | times: 640 | divided_by: history_span | plus: 20 %}
+{% assign peak_two_x = peak_two_index | times: 640 | divided_by: history_span | plus: 20 %}
+{% assign peak_three_x = peak_three_index | times: 640 | divided_by: history_span | plus: 20 %}
+{% assign peak_one_y_offset = peak_one_value | times: 198 | divided_by: chart_span %}
+{% assign peak_two_y_offset = peak_two_value | times: 198 | divided_by: chart_span %}
+{% assign peak_three_y_offset = peak_three_value | times: 198 | divided_by: chart_span %}
+{% assign peak_one_y = 232 | minus: peak_one_y_offset %}
+{% assign peak_two_y = 232 | minus: peak_two_y_offset %}
+{% assign peak_three_y = 232 | minus: peak_three_y_offset %}
+{% assign peak_one_label_y = peak_one_y | minus: 9 %}
+{% if peak_one_label_y < 14 %}{% assign peak_one_label_y = peak_one_y | plus: 17 %}{% endif %}
+{% assign peak_two_label_y = peak_two_y | plus: 17 %}
+{% if peak_two_label_y > 230 %}{% assign peak_two_label_y = peak_two_y | minus: 9 %}{% endif %}
+{% assign peak_three_label_y = peak_three_y | minus: 9 %}
+{% if peak_three_label_y < 14 %}{% assign peak_three_label_y = peak_three_y | plus: 17 %}{% endif %}
 
 <div class="view view--full rainfall-history">
   <style>
@@ -108,7 +135,7 @@
   {% if history_count > 0 %}
     <section class="rainfall-history__total">
       <div class="rainfall-history__value">{{ history_total | round: 1 }} {{ unit_label }}</div>
-      <div class="rainfall-history__descriptor">365 days</div>
+      <div class="rainfall-history__descriptor">{{ rainy_days }} rainy days</div>
     </section>
 
     <section class="rainfall-history__chart">
@@ -118,9 +145,17 @@
         <polyline class="rainfall-history__history" points="{{ history_points }}" />
         <polyline class="rainfall-history__forecast" points="{{ forecast_points }}" />
         <line class="rainfall-history__today" x1="660" y1="14" x2="660" y2="232" />
-        {% if peak_value > 0 %}
-          <circle class="rainfall-history__peak" cx="{{ peak_x }}" cy="{{ peak_y }}" r="3.5" />
-          <text class="rainfall-history__peak-label" x="{{ peak_label_x }}" y="{{ peak_label_y }}" text-anchor="{{ peak_anchor }}">{{ peak_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% if peak_one_value > 0 %}
+          <circle class="rainfall-history__peak" cx="{{ peak_one_x }}" cy="{{ peak_one_y }}" r="3.5" />
+          <text class="rainfall-history__peak-label" x="{{ peak_one_x | plus: 8 }}" y="{{ peak_one_label_y }}">{{ peak_one_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_one_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% endif %}
+        {% if peak_two_value > 0 %}
+          <circle class="rainfall-history__peak" cx="{{ peak_two_x }}" cy="{{ peak_two_y }}" r="3.5" />
+          <text class="rainfall-history__peak-label" x="{{ peak_two_x | plus: 8 }}" y="{{ peak_two_label_y }}">{{ peak_two_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_two_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% endif %}
+        {% if peak_three_value > 0 %}
+          <circle class="rainfall-history__peak" cx="{{ peak_three_x }}" cy="{{ peak_three_y }}" r="3.5" />
+          <text class="rainfall-history__peak-label" x="{{ peak_three_x | minus: 8 }}" y="{{ peak_three_label_y }}" text-anchor="end">{{ peak_three_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_three_index] | append: "T12:00" | date: "%b %d" }}</text>
         {% endif %}
       </svg>
     </section>

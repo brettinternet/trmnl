@@ -1,8 +1,10 @@
-{% assign current_aqi = data.current.us_aqi | plus: 0 %}
+{% assign current_aqi = 0 %}
 {% assign current_available = false %}
 {% assign category = "Unavailable" %}
-{% if data.current.us_aqi != nil and data.current.us_aqi != blank and data.current.us_aqi == current_aqi and current_aqi >= 0 %}
-  {% assign current_available = true %}
+{% if data.current.us_aqi != nil and data.current.us_aqi != blank %}
+  {% assign current_aqi = data.current.us_aqi | plus: 0 %}
+  {% if current_aqi >= 0 %}
+    {% assign current_available = true %}
   {% if current_aqi <= 50 %}
     {% assign category = "Good" %}
   {% elsif current_aqi <= 100 %}
@@ -15,12 +17,12 @@
     {% assign category = "Very unhealthy" %}
   {% else %}
     {% assign category = "Hazardous" %}
+    {% endif %}
   {% endif %}
 {% endif %}
 
 {% assign today_date = data.current.time | slice: 0, 10 %}
-{% assign daily_dates_text = "" %}
-{% assign daily_values_text = "" %}
+{% assign daily_records_text = "" %}
 {% assign current_day = "" %}
 {% assign day_max = -1 %}
 {% assign hourly_last = data.hourly.time.size | minus: 1 %}
@@ -29,8 +31,8 @@
     {% assign day = data.hourly.time[i] | slice: 0, 10 %}
     {% if day != current_day %}
       {% if current_day != "" %}
-        {% assign daily_dates_text = daily_dates_text | append: current_day | append: "|" %}
-        {% assign daily_values_text = daily_values_text | append: day_max | append: "|" %}
+        {% capture daily_record %}{{ current_day }},{{ day_max }}|{% endcapture %}
+        {% assign daily_records_text = daily_records_text | append: daily_record %}
       {% endif %}
       {% assign current_day = day %}
       {% assign day_max = -1 %}
@@ -44,100 +46,127 @@
     {% endif %}
   {% endfor %}
   {% if current_day != "" %}
-    {% assign daily_dates_text = daily_dates_text | append: current_day | append: "|" %}
-    {% assign daily_values_text = daily_values_text | append: day_max | append: "|" %}
+    {% capture daily_record %}{{ current_day }},{{ day_max }}|{% endcapture %}
+    {% assign daily_records_text = daily_records_text | append: daily_record %}
   {% endif %}
 {% endif %}
 
-{% assign daily_dates = daily_dates_text | split: "|" %}
-{% assign daily_values = daily_values_text | split: "|" %}
-{% assign daily_count = daily_dates.size | minus: 1 %}
+{% assign daily_records = daily_records_text | split: "|" %}
+{% assign daily_count = daily_records.size | minus: 1 %}
+{% assign daily_last_index = daily_count | minus: 1 %}
 {% assign today_index = daily_count %}
-{% if today_date != blank and daily_count > 0 %}
-  {% for i in (0..daily_count) %}
-    {% if daily_dates[i] == today_date %}
-      {% assign today_index = i %}
-      {% break %}
-    {% endif %}
-  {% endfor %}
-{% endif %}
+{% for record in daily_records %}
+  {% assign fields = record | split: "," %}
+  {% if fields[0] == today_date %}
+    {% assign today_index = forloop.index0 %}
+    {% break %}
+  {% endif %}
+{% endfor %}
 
 {% assign chart_min = 9999 %}
 {% assign chart_max = -1 %}
-{% assign peak_value = -1 %}
-{% assign peak_index = 0 %}
 {% assign has_series = false %}
-{% assign has_peak = false %}
-{% if daily_count > 0 %}
-  {% for i in (0..daily_count) %}
-    {% assign daily_value = daily_values[i] | plus: 0 %}
-    {% if daily_values[i] != blank and daily_value >= 0 %}
+{% assign history_segment = today_index | divided_by: 3 %}
+{% if history_segment < 1 %}{% assign history_segment = 1 %}{% endif %}
+{% assign segment_three_start = history_segment | times: 2 %}
+{% assign peak_one_value = -1 %}
+{% assign peak_two_value = -1 %}
+{% assign peak_three_value = -1 %}
+{% assign peak_one_index = 0 %}
+{% assign peak_two_index = history_segment %}
+{% assign peak_three_index = segment_three_start %}
+{% assign peak_one_date = "" %}
+{% assign peak_two_date = "" %}
+{% assign peak_three_date = "" %}
+
+{% for record in daily_records %}
+  {% assign fields = record | split: "," %}
+  {% if fields[1] != nil and fields[1] != blank %}
+    {% assign daily_value = fields[1] | plus: 0 %}
+    {% if daily_value >= 0 %}
       {% assign has_series = true %}
       {% if daily_value < chart_min %}{% assign chart_min = daily_value %}{% endif %}
       {% if daily_value > chart_max %}{% assign chart_max = daily_value %}{% endif %}
-      {% if i < today_index and daily_value > peak_value %}
-        {% assign peak_value = daily_value %}
-        {% assign peak_index = i %}
-        {% assign has_peak = true %}
+      {% if forloop.index0 < today_index %}
+        {% if forloop.index0 < history_segment %}
+          {% if daily_value > peak_one_value %}
+            {% assign peak_one_value = daily_value %}
+            {% assign peak_one_index = forloop.index0 %}
+            {% assign peak_one_date = fields[0] %}
+          {% endif %}
+        {% elsif forloop.index0 < segment_three_start %}
+          {% if daily_value > peak_two_value %}
+            {% assign peak_two_value = daily_value %}
+            {% assign peak_two_index = forloop.index0 %}
+            {% assign peak_two_date = fields[0] %}
+          {% endif %}
+        {% elsif daily_value > peak_three_value %}
+          {% assign peak_three_value = daily_value %}
+          {% assign peak_three_index = forloop.index0 %}
+          {% assign peak_three_date = fields[0] %}
+        {% endif %}
       {% endif %}
     {% endif %}
-  {% endfor %}
-{% endif %}
+  {% endif %}
+{% endfor %}
+
 {% assign chart_span = chart_max | minus: chart_min %}
 {% if chart_span < 1 %}{% assign chart_span = 1 %}{% endif %}
-
 {% assign history_count = today_index %}
-{% assign forecast_count = daily_count | minus: today_index | plus: 1 %}
 {% assign history_last_index = history_count | minus: 1 %}
-{% assign forecast_last_index = daily_count %}
+{% assign forecast_count = daily_count | minus: today_index %}
 {% assign forecast_last_offset = forecast_count | minus: 1 %}
 {% assign history_points = "" %}
 {% assign forecast_points = "" %}
-{% if daily_count > 0 %}
-  {% for i in (0..daily_count) %}
-    {% assign daily_value = daily_values[i] | plus: 0 %}
-    {% if daily_values[i] != blank and daily_value >= 0 %}
-      {% assign remainder = i | modulo: 2 %}
-      {% assign should_plot = false %}
-      {% if i >= today_index or remainder == 0 or i == peak_index or i == history_last_index %}
-        {% assign should_plot = true %}
-      {% endif %}
-      {% if should_plot %}
-        {% if i < today_index %}
-          {% if history_count > 1 %}
-            {% assign x = i | times: 640 | divided_by: history_last_index | plus: 30 %}
+
+{% for record in daily_records %}
+  {% assign fields = record | split: "," %}
+  {% if fields[1] != nil and fields[1] != blank %}
+    {% assign daily_value = fields[1] | plus: 0 %}
+    {% if daily_value >= 0 %}
+      {% assign remainder = forloop.index0 | modulo: 2 %}
+      {% if forloop.index0 >= today_index or remainder == 0 or forloop.index0 == history_last_index %}
+        {% if forloop.index0 < today_index %}
+          {% if history_last_index > 0 %}
+            {% assign x = forloop.index0 | times: 640 | divided_by: history_last_index | plus: 30 %}
           {% else %}
             {% assign x = 30 %}
           {% endif %}
-        {% elsif forecast_count > 1 %}
-          {% assign forecast_offset = i | minus: today_index %}
+        {% elsif forecast_last_offset > 0 %}
+          {% assign forecast_offset = forloop.index0 | minus: today_index %}
           {% assign x = forecast_offset | times: 60 | divided_by: forecast_last_offset | plus: 670 %}
         {% else %}
           {% assign x = 670 %}
         {% endif %}
         {% assign y = chart_max | minus: daily_value | times: 190 | divided_by: chart_span | plus: 22 %}
         {% capture point %}{{ x }},{{ y }} {% endcapture %}
-        {% if i < today_index %}
+        {% if forloop.index0 < today_index %}
           {% assign history_points = history_points | append: point %}
         {% else %}
           {% assign forecast_points = forecast_points | append: point %}
         {% endif %}
       {% endif %}
     {% endif %}
-  {% endfor %}
-{% endif %}
+  {% endif %}
+{% endfor %}
 
-{% assign peak_x = 30 %}
-{% if history_count > 1 %}{% assign peak_x = peak_index | times: 640 | divided_by: history_last_index | plus: 30 %}{% endif %}
-{% assign peak_y = chart_max | minus: peak_value | times: 190 | divided_by: chart_span | plus: 22 %}
-{% assign peak_anchor = "start" %}
-{% assign peak_label_x = peak_x | plus: 8 %}
-{% if peak_x > 620 %}
-  {% assign peak_anchor = "end" %}
-  {% assign peak_label_x = peak_x | minus: 8 %}
+{% assign peak_one_x = 30 %}
+{% assign peak_two_x = 30 %}
+{% assign peak_three_x = 30 %}
+{% if history_last_index > 0 %}
+  {% assign peak_one_x = peak_one_index | times: 640 | divided_by: history_last_index | plus: 30 %}
+  {% assign peak_two_x = peak_two_index | times: 640 | divided_by: history_last_index | plus: 30 %}
+  {% assign peak_three_x = peak_three_index | times: 640 | divided_by: history_last_index | plus: 30 %}
 {% endif %}
-{% assign peak_label_y = peak_y | minus: 8 %}
-{% if peak_label_y < 14 %}{% assign peak_label_y = peak_y | plus: 16 %}{% endif %}
+{% assign peak_one_y = chart_max | minus: peak_one_value | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign peak_two_y = chart_max | minus: peak_two_value | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign peak_three_y = chart_max | minus: peak_three_value | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign peak_one_label_y = peak_one_y | minus: 8 %}
+{% if peak_one_label_y < 14 %}{% assign peak_one_label_y = peak_one_y | plus: 16 %}{% endif %}
+{% assign peak_two_label_y = peak_two_y | plus: 16 %}
+{% if peak_two_label_y > 226 %}{% assign peak_two_label_y = peak_two_y | minus: 8 %}{% endif %}
+{% assign peak_three_label_y = peak_three_y | minus: 8 %}
+{% if peak_three_label_y < 14 %}{% assign peak_three_label_y = peak_three_y | plus: 16 %}{% endif %}
 
 <div class="view view--full air-quality-history">
   <style>
@@ -166,9 +195,17 @@
       {% if history_points != blank %}<polyline class="air-quality-history__history" points="{{ history_points }}" />{% endif %}
       {% if forecast_points != blank %}<polyline class="air-quality-history__forecast" points="{{ forecast_points }}" />{% endif %}
       {% if has_series and forecast_count > 0 %}<line class="air-quality-history__today" x1="670" y1="12" x2="670" y2="222" />{% endif %}
-      {% if has_peak %}
-        <circle class="air-quality-history__peak" cx="{{ peak_x }}" cy="{{ peak_y }}" r="3.5" />
-        <text class="air-quality-history__peak-label" x="{{ peak_label_x }}" y="{{ peak_label_y }}" text-anchor="{{ peak_anchor }}">{{ peak_value | round }} · {{ daily_dates[peak_index] | append: "T12:00" | date: "%b %d" }}</text>
+      {% if peak_one_value >= 0 %}
+        <circle class="air-quality-history__peak" cx="{{ peak_one_x }}" cy="{{ peak_one_y }}" r="3.5" />
+        <text class="air-quality-history__peak-label" x="{{ peak_one_x | plus: 8 }}" y="{{ peak_one_label_y }}">{{ peak_one_value | round }} · {{ peak_one_date | append: "T12:00" | date: "%b %d" }}</text>
+      {% endif %}
+      {% if peak_two_value >= 0 %}
+        <circle class="air-quality-history__peak" cx="{{ peak_two_x }}" cy="{{ peak_two_y }}" r="3.5" />
+        <text class="air-quality-history__peak-label" x="{{ peak_two_x | plus: 8 }}" y="{{ peak_two_label_y }}">{{ peak_two_value | round }} · {{ peak_two_date | append: "T12:00" | date: "%b %d" }}</text>
+      {% endif %}
+      {% if peak_three_value >= 0 %}
+        <circle class="air-quality-history__peak" cx="{{ peak_three_x }}" cy="{{ peak_three_y }}" r="3.5" />
+        <text class="air-quality-history__peak-label" x="{{ peak_three_x | minus: 8 }}" y="{{ peak_three_label_y }}" text-anchor="end">{{ peak_three_value | round }} · {{ peak_three_date | append: "T12:00" | date: "%b %d" }}</text>
       {% endif %}
     </svg>
   </section>

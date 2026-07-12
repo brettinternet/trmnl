@@ -27,13 +27,17 @@
 {% endif %}
 
 {% assign point_count = data.daily.time.size | minus: 1 %}
-{% assign today_date = data.current.time | date: "%Y-%m-%d" %}
+{% assign today_date = data.current.time | slice: 0, 10 %}
 {% assign today_index = 365 %}
 {% for i in (0..372) %}
   {% if data.daily.time[i] == today_date %}
     {% assign today_index = i %}
   {% endif %}
 {% endfor %}
+{% assign history_quarter = today_index | divided_by: 4 %}
+{% if history_quarter < 1 %}{% assign history_quarter = 1 %}{% endif %}
+{% assign quarter_two_end = history_quarter | times: 2 %}
+{% assign quarter_four_start = history_quarter | times: 3 %}
 
 {% assign chart_min = 9999 %}
 {% assign chart_max = -9999 %}
@@ -41,6 +45,10 @@
 {% assign peak_low = 9999 %}
 {% assign peak_high_index = 0 %}
 {% assign peak_low_index = 0 %}
+{% assign autumn_peak = -9999 %}
+{% assign spring_peak = -9999 %}
+{% assign autumn_peak_index = history_quarter %}
+{% assign spring_peak_index = quarter_four_start %}
 {% for i in (0..372) %}
   {% if i <= point_count %}
     {% assign high = data.daily.temperature_2m_max[i] | plus: 0 %}
@@ -55,6 +63,14 @@
       {% assign peak_low = low %}
       {% assign peak_low_index = i %}
     {% endif %}
+    {% if i >= history_quarter and i < quarter_two_end and high > autumn_peak %}
+      {% assign autumn_peak = high %}
+      {% assign autumn_peak_index = i %}
+    {% endif %}
+    {% if i >= quarter_four_start and i < today_index and high > spring_peak %}
+      {% assign spring_peak = high %}
+      {% assign spring_peak_index = i %}
+    {% endif %}
   {% endif %}
 {% endfor %}
 {% assign chart_span = chart_max | minus: chart_min %}
@@ -68,7 +84,7 @@
 {% for i in (0..372) %}
   {% if i <= point_count %}
     {% assign remainder = i | modulo: 7 %}
-    {% if remainder == 0 or i >= today_index or i == peak_high_index or i == peak_low_index %}
+    {% if remainder == 0 or i >= today_index or i == peak_high_index or i == peak_low_index or i == autumn_peak_index or i == spring_peak_index %}
       {% if i < today_index %}
         {% assign x = i | times: 640 | divided_by: today_index | plus: 30 %}
       {% else %}
@@ -102,6 +118,14 @@
 {% assign peak_low_x = peak_low_index | times: 640 | divided_by: today_index | plus: 30 %}
 {% assign peak_high_y = chart_max | minus: peak_high | times: 190 | divided_by: chart_span | plus: 22 %}
 {% assign peak_low_y = chart_max | minus: peak_low | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign autumn_peak_x = autumn_peak_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign spring_peak_x = spring_peak_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign autumn_peak_y = chart_max | minus: autumn_peak | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign spring_peak_y = chart_max | minus: spring_peak | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign autumn_peak_label_y = autumn_peak_y | plus: 16 %}
+{% if autumn_peak_label_y > 225 %}{% assign autumn_peak_label_y = autumn_peak_y | minus: 8 %}{% endif %}
+{% assign spring_peak_label_y = spring_peak_y | minus: 8 %}
+{% if spring_peak_label_y < 12 %}{% assign spring_peak_label_y = spring_peak_y | plus: 16 %}{% endif %}
 {% assign peak_high_anchor = "start" %}
 {% assign peak_high_label_x = peak_high_x | plus: 7 %}
 {% if peak_high_x > 620 %}{% assign peak_high_anchor = "end" %}{% assign peak_high_label_x = peak_high_x | minus: 7 %}{% endif %}
@@ -148,9 +172,13 @@
         <polyline class="weather-history__forecast" points="{{ forecast_low_points }}" />
         <line class="weather-history__today" x1="{{ today_x }}" y1="12" x2="{{ today_x }}" y2="222" />
         <circle class="weather-history__peak" cx="{{ peak_high_x }}" cy="{{ peak_high_y }}" r="3.5" />
-        <text class="weather-history__peak-label" x="{{ peak_high_label_x }}" y="{{ peak_high_label_y }}" text-anchor="{{ peak_high_anchor }}">{{ peak_high | round }}{{ degree }} · {{ data.daily.time[peak_high_index] | date: "%b" }}</text>
+        <text class="weather-history__peak-label" x="{{ peak_high_label_x }}" y="{{ peak_high_label_y }}" text-anchor="{{ peak_high_anchor }}">{{ peak_high | round }}{{ degree }} · {{ data.daily.time[peak_high_index] | append: "T12:00" | date: "%b" }}</text>
+        <circle class="weather-history__peak" cx="{{ autumn_peak_x }}" cy="{{ autumn_peak_y }}" r="3.5" />
+        <text class="weather-history__peak-label" x="{{ autumn_peak_x | plus: 7 }}" y="{{ autumn_peak_label_y }}">{{ autumn_peak | round }}{{ degree }} · {{ data.daily.time[autumn_peak_index] | append: "T12:00" | date: "%b" }}</text>
+        <circle class="weather-history__peak" cx="{{ spring_peak_x }}" cy="{{ spring_peak_y }}" r="3.5" />
+        <text class="weather-history__peak-label" x="{{ spring_peak_x | minus: 7 }}" y="{{ spring_peak_label_y }}" text-anchor="end">{{ spring_peak | round }}{{ degree }} · {{ data.daily.time[spring_peak_index] | append: "T12:00" | date: "%b" }}</text>
         <circle class="weather-history__peak" cx="{{ peak_low_x }}" cy="{{ peak_low_y }}" r="3.5" />
-        <text class="weather-history__peak-label" x="{{ peak_low_label_x }}" y="{{ peak_low_label_y }}" text-anchor="{{ peak_low_anchor }}">{{ peak_low | round }}{{ degree }} · {{ data.daily.time[peak_low_index] | date: "%b" }}</text>
+        <text class="weather-history__peak-label" x="{{ peak_low_label_x }}" y="{{ peak_low_label_y }}" text-anchor="{{ peak_low_anchor }}">{{ peak_low | round }}{{ degree }} · {{ data.daily.time[peak_low_index] | append: "T12:00" | date: "%b" }}</text>
       </svg>
     </section>
   {% else %}
