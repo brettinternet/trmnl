@@ -1,8 +1,10 @@
 {% assign degree = data.current_units.temperature_2m | slice: 0, 1 | default: "°" %}
 {% assign current_temp = data.current.temperature_2m | round %}
 {% assign current_code = data.current.weather_code | plus: 0 %}
-{% assign condition = "Clear" %}
-{% if current_code == 1 %}
+{% assign condition = "Conditions unavailable" %}
+{% if current_code == 0 %}
+  {% assign condition = "Clear" %}
+{% elsif current_code == 1 %}
   {% assign condition = "Mostly clear" %}
 {% elsif current_code == 2 %}
   {% assign condition = "Partly cloudy" %}
