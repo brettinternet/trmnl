@@ -53,7 +53,6 @@
 
 {% assign daily_records = daily_records_text | split: "|" %}
 {% assign daily_count = daily_records.size | minus: 1 %}
-{% assign daily_last_index = daily_count | minus: 1 %}
 {% assign today_index = daily_count %}
 {% for record in daily_records %}
   {% assign fields = record | split: "," %}
