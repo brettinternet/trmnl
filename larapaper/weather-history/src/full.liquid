@@ -29,7 +29,7 @@
 {% assign point_count = data.daily.time.size | minus: 1 %}
 {% assign today_date = data.current.time | date: "%Y-%m-%d" %}
 {% assign today_index = 365 %}
-{% for i in (0..371) %}
+{% for i in (0..372) %}
   {% if data.daily.time[i] == today_date %}
     {% assign today_index = i %}
   {% endif %}
@@ -41,7 +41,7 @@
 {% assign peak_low = 9999 %}
 {% assign peak_high_index = 0 %}
 {% assign peak_low_index = 0 %}
-{% for i in (0..371) %}
+{% for i in (0..372) %}
   {% if i <= point_count %}
     {% assign high = data.daily.temperature_2m_max[i] | plus: 0 %}
     {% assign low = data.daily.temperature_2m_min[i] | plus: 0 %}
@@ -65,7 +65,7 @@
 {% assign history_low_points = "" %}
 {% assign forecast_high_points = "" %}
 {% assign forecast_low_points = "" %}
-{% for i in (0..371) %}
+{% for i in (0..372) %}
   {% if i <= point_count %}
     {% assign remainder = i | modulo: 7 %}
     {% if remainder == 0 or i >= today_index or i == peak_high_index or i == peak_low_index %}
