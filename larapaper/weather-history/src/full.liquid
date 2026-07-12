@@ -1,0 +1,189 @@
+{% assign custom_fields = trmnl.plugin_settings.custom_fields_values %}
+{% assign location_name = custom_fields.location_name | default: config.location_name | default: "Weather" | strip %}
+{% assign current_temp = data.current.temperature_2m | round %}
+{% assign apparent_temp = data.current.apparent_temperature | round %}
+{% assign current_code = data.current.weather_code | plus: 0 %}
+{% assign condition = "Clear" %}
+{% if current_code == 1 %}
+  {% assign condition = "Mostly clear" %}
+{% elsif current_code == 2 %}
+  {% assign condition = "Partly cloudy" %}
+{% elsif current_code == 3 %}
+  {% assign condition = "Overcast" %}
+{% elsif current_code == 45 or current_code == 48 %}
+  {% assign condition = "Fog" %}
+{% elsif current_code >= 51 and current_code <= 57 %}
+  {% assign condition = "Drizzle" %}
+{% elsif current_code >= 61 and current_code <= 67 %}
+  {% assign condition = "Rain" %}
+{% elsif current_code >= 71 and current_code <= 77 %}
+  {% assign condition = "Snow" %}
+{% elsif current_code >= 80 and current_code <= 82 %}
+  {% assign condition = "Showers" %}
+{% elsif current_code >= 85 and current_code <= 86 %}
+  {% assign condition = "Snow showers" %}
+{% elsif current_code >= 95 %}
+  {% assign condition = "Thunderstorm" %}
+{% endif %}
+
+{% assign point_count = data.daily.time.size | minus: 1 %}
+{% assign today_date = data.current.time | date: "%Y-%m-%d" %}
+{% assign today_index = 365 %}
+{% for i in (0..371) %}
+  {% if data.daily.time[i] == today_date %}
+    {% assign today_index = i %}
+  {% endif %}
+{% endfor %}
+
+{% assign chart_min = 9999 %}
+{% assign chart_max = -9999 %}
+{% assign peak_high = -9999 %}
+{% assign peak_low = 9999 %}
+{% assign peak_high_index = 0 %}
+{% assign peak_low_index = 0 %}
+{% for i in (0..371) %}
+  {% if i <= point_count %}
+    {% assign high = data.daily.temperature_2m_max[i] | plus: 0 %}
+    {% assign low = data.daily.temperature_2m_min[i] | plus: 0 %}
+    {% if high > chart_max %}{% assign chart_max = high %}{% endif %}
+    {% if low < chart_min %}{% assign chart_min = low %}{% endif %}
+    {% if i < today_index and high > peak_high %}
+      {% assign peak_high = high %}
+      {% assign peak_high_index = i %}
+    {% endif %}
+    {% if i < today_index and low < peak_low %}
+      {% assign peak_low = low %}
+      {% assign peak_low_index = i %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+{% assign chart_span = chart_max | minus: chart_min %}
+{% if chart_span < 1 %}{% assign chart_span = 1 %}{% endif %}
+
+{% assign history_mean_points = "" %}
+{% assign history_high_points = "" %}
+{% assign history_low_points = "" %}
+{% assign forecast_high_points = "" %}
+{% assign forecast_low_points = "" %}
+{% for i in (0..371) %}
+  {% if i <= point_count %}
+    {% assign remainder = i | modulo: 7 %}
+    {% if remainder == 0 or i >= today_index or i == peak_high_index or i == peak_low_index %}
+      {% if i < today_index %}
+        {% assign x = i | times: 640 | divided_by: today_index | plus: 30 %}
+      {% else %}
+        {% assign forecast_offset = i | minus: today_index %}
+        {% assign forecast_count = point_count | minus: today_index %}
+        {% assign x = forecast_offset | times: 60 | divided_by: forecast_count | plus: 670 %}
+      {% endif %}
+      {% assign mean = data.daily.temperature_2m_mean[i] | plus: 0 %}
+      {% assign high = data.daily.temperature_2m_max[i] | plus: 0 %}
+      {% assign low = data.daily.temperature_2m_min[i] | plus: 0 %}
+      {% assign mean_y = chart_max | minus: mean | times: 190 | divided_by: chart_span | plus: 22 %}
+      {% assign high_y = chart_max | minus: high | times: 190 | divided_by: chart_span | plus: 22 %}
+      {% assign low_y = chart_max | minus: low | times: 190 | divided_by: chart_span | plus: 22 %}
+      {% capture mean_point %}{{ x }},{{ mean_y }} {% endcapture %}
+      {% capture high_point %}{{ x }},{{ high_y }} {% endcapture %}
+      {% capture low_point %}{{ x }},{{ low_y }} {% endcapture %}
+      {% if i < today_index %}
+        {% assign history_mean_points = history_mean_points | append: mean_point %}
+        {% assign history_high_points = history_high_points | append: high_point %}
+        {% assign history_low_points = history_low_points | append: low_point %}
+      {% else %}
+        {% assign forecast_high_points = forecast_high_points | append: high_point %}
+        {% assign forecast_low_points = forecast_low_points | append: low_point %}
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% assign today_x = 670 %}
+{% assign peak_high_x = peak_high_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign peak_low_x = peak_low_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign peak_high_y = chart_max | minus: peak_high | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign peak_low_y = chart_max | minus: peak_low | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign peak_high_anchor = "start" %}
+{% assign peak_high_label_x = peak_high_x | plus: 7 %}
+{% if peak_high_x > 620 %}{% assign peak_high_anchor = "end" %}{% assign peak_high_label_x = peak_high_x | minus: 7 %}{% endif %}
+{% assign peak_low_anchor = "start" %}
+{% assign peak_low_label_x = peak_low_x | plus: 7 %}
+{% if peak_low_x > 620 %}{% assign peak_low_anchor = "end" %}{% assign peak_low_label_x = peak_low_x | minus: 7 %}{% endif %}
+{% assign peak_high_label_y = peak_high_y | minus: 8 %}
+{% if peak_high_label_y < 12 %}{% assign peak_high_label_y = peak_high_y | plus: 16 %}{% endif %}
+{% assign peak_low_label_y = peak_low_y | plus: 16 %}
+{% if peak_low_label_y > 225 %}{% assign peak_low_label_y = peak_low_y | minus: 8 %}{% endif %}
+
+{% assign today_high = data.daily.temperature_2m_max[today_index] | round %}
+{% assign today_low = data.daily.temperature_2m_min[today_index] | round %}
+{% assign rain_chance = data.daily.precipitation_probability_max[today_index] | round %}
+{% assign degree = data.current_units.temperature_2m | slice: 0, 1 | default: "°" %}
+{% assign wind_unit = custom_fields.wind_unit | default: config.wind_unit | default: "mph" %}
+{% assign wind_label = wind_unit %}
+{% if wind_unit == "kmh" %}{% assign wind_label = "km/h" %}{% endif %}
+
+<div class="view view--full weather-history">
+  <style>
+    .weather-history { box-sizing: border-box; color: #111; display: grid; gap: 22px; grid-template-columns: 190px 1fr; height: 100%; padding: 34px 38px 26px; width: 100%; }
+    .weather-history__current { align-self: center; border-right: 2px solid #d4d4d4; padding-right: 24px; text-align: center; }
+    .weather-history__location { font-size: 15px; font-weight: 700; letter-spacing: .08em; margin-bottom: 18px; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+    .weather-history__temp { font-size: 78px; font-weight: 400; letter-spacing: -.08em; line-height: .85; }
+    .weather-history__condition { font-size: 19px; font-weight: 800; margin-top: 13px; }
+    .weather-history__range { font-size: 16px; font-weight: 700; margin-top: 8px; }
+    .weather-history__facts { color: #555; display: grid; font-size: 12px; font-weight: 700; gap: 5px; margin-top: 20px; }
+    .weather-history__chart { align-self: center; min-width: 0; }
+    .weather-history__heading { align-items: baseline; display: flex; justify-content: space-between; margin: 0 12px 6px 30px; }
+    .weather-history__title { font-size: 19px; font-weight: 900; }
+    .weather-history__legend { color: #666; font-size: 11px; font-weight: 700; }
+    .weather-history svg { display: block; height: 250px; overflow: visible; width: 100%; }
+    .weather-history__history-mean { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
+    .weather-history__history-bound { fill: none; stroke: #aaa; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
+    .weather-history__forecast { fill: none; stroke: #555; stroke-dasharray: 4 4; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+    .weather-history__forecast-zone { fill: #ededed; }
+    .weather-history__today { stroke: #999; stroke-dasharray: 2 4; stroke-width: 1; }
+    .weather-history__peak { fill: #111; }
+    .weather-history__peak-label { fill: #111; font-size: 12px; font-weight: 900; }
+    .weather-history__axis-label { fill: #666; font-size: 11px; font-weight: 700; }
+    .weather-history__error { align-items: center; display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center; text-align: center; width: 100%; }
+  </style>
+
+  {% if data.current.temperature_2m and data.daily.time %}
+    <section class="weather-history__current">
+      <div class="weather-history__location">{{ location_name }}</div>
+      <div class="weather-history__temp">{{ current_temp }}{{ degree }}</div>
+      <div class="weather-history__condition">{{ condition }}</div>
+      <div class="weather-history__range">{{ today_high }}{{ degree }} / {{ today_low }}{{ degree }}</div>
+      <div class="weather-history__facts">
+        <span>Feels {{ apparent_temp }}{{ degree }} · humidity {{ data.current.relative_humidity_2m | round }}%</span>
+        <span>Wind {{ data.current.wind_speed_10m | round }} {{ wind_label }} · rain {{ rain_chance }}%</span>
+      </div>
+    </section>
+
+    <section class="weather-history__chart">
+      <div class="weather-history__heading">
+        <span class="weather-history__title">A year of temperature</span>
+        <span class="weather-history__legend">daily mean · high / low · 7-day outlook</span>
+      </div>
+      <svg viewBox="0 0 760 250" role="img" aria-label="Daily mean, high, and low temperatures over the past year with a seven day forecast">
+        <rect class="weather-history__forecast-zone" x="{{ today_x }}" y="12" width="{{ 730 | minus: today_x }}" height="210" rx="3" />
+        <polyline class="weather-history__history-bound" points="{{ history_high_points }}" />
+        <polyline class="weather-history__history-bound" points="{{ history_low_points }}" />
+        <polyline class="weather-history__history-mean" points="{{ history_mean_points }}" />
+        <polyline class="weather-history__forecast" points="{{ forecast_high_points }}" />
+        <polyline class="weather-history__forecast" points="{{ forecast_low_points }}" />
+        <line class="weather-history__today" x1="{{ today_x }}" y1="12" x2="{{ today_x }}" y2="222" />
+        <circle class="weather-history__peak" cx="{{ peak_high_x }}" cy="{{ peak_high_y }}" r="3.5" />
+        <text class="weather-history__peak-label" x="{{ peak_high_label_x }}" y="{{ peak_high_label_y }}" text-anchor="{{ peak_high_anchor }}">{{ peak_high | round }}{{ degree }} · {{ data.daily.time[peak_high_index] | date: "%b" }}</text>
+        <circle class="weather-history__peak" cx="{{ peak_low_x }}" cy="{{ peak_low_y }}" r="3.5" />
+        <text class="weather-history__peak-label" x="{{ peak_low_label_x }}" y="{{ peak_low_label_y }}" text-anchor="{{ peak_low_anchor }}">{{ peak_low | round }}{{ degree }} · {{ data.daily.time[peak_low_index] | date: "%b" }}</text>
+        <text class="weather-history__axis-label" x="30" y="244">{{ data.daily.time[0] | date: "%b %Y" }}</text>
+        <text class="weather-history__axis-label" x="{{ today_x | minus: 5 }}" y="244" text-anchor="end">Today</text>
+        <text class="weather-history__axis-label" x="730" y="244" text-anchor="end">Forecast</text>
+      </svg>
+    </section>
+  {% else %}
+    <div class="weather-history__error">
+      <span class="title">Weather unavailable</span>
+      <span class="description">Check the configured latitude and longitude.</span>
+    </div>
+  {% endif %}
+</div>
