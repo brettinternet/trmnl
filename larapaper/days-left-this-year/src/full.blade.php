@@ -21,15 +21,6 @@
     $weeks = 52;
     $daysPerWeek = 7;
     $gridStart = $today->copy()->startOfYear()->startOfWeek(Carbon::SUNDAY);
-    $yearEnd = $today->copy()->endOfYear()->startOfDay();
-    $calendarDays = $gridStart->diffInDays($yearEnd) + 1;
-    $calendarWeeks = (int) ceil($calendarDays / $daysPerWeek);
-
-    $weeksForColumn = function (int $column) use ($weeks, $calendarWeeks): array {
-        return $column === $weeks - 1
-            ? range($column, $calendarWeeks - 1)
-            : [$column];
-    };
 
     $stateFor = function (Carbon $date) use ($today, $year): string {
         if ((int) $date->format('Y') !== $year) {
@@ -48,22 +39,10 @@
     .year-grid {
         display: grid;
         grid-template-columns: repeat({{ $weeks }}, 1fr);
+        grid-template-rows: repeat(7, 1fr);
+        grid-auto-flow: column;
         gap: 3px;
         width: 100%;
-        align-items: start;
-    }
-
-    .year-grid__column {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-        min-width: 0;
-    }
-
-    .year-grid__week {
-        display: grid;
-        grid-template-rows: repeat(7, 1fr);
-        gap: 3px;
     }
 
     .year-grid__day {
@@ -107,18 +86,12 @@
         </div>
 
         <div class="year-grid">
-            @for ($column = 0; $column < $weeks; $column++)
-                <div class="year-grid__column">
-                    @foreach ($weeksForColumn($column) as $week)
-                        @php $weekStart = $gridStart->copy()->addWeeks($week); @endphp
-                        <div class="year-grid__week">
-                            @for ($dayOfWeek = 0; $dayOfWeek < $daysPerWeek; $dayOfWeek++)
-                                @php $date = $weekStart->copy()->addDays($dayOfWeek); @endphp
-                                <span class="year-grid__day {{ $stateFor($date) }}"></span>
-                            @endfor
-                        </div>
-                    @endforeach
-                </div>
+            @for ($week = 0; $week < $weeks; $week++)
+                @php $weekStart = $gridStart->copy()->addWeeks($week); @endphp
+                @for ($dayOfWeek = 0; $dayOfWeek < $daysPerWeek; $dayOfWeek++)
+                    @php $date = $weekStart->copy()->addDays($dayOfWeek); @endphp
+                    <span class="year-grid__day {{ $stateFor($date) }}"></span>
+                @endfor
             @endfor
         </div>
     </div>
