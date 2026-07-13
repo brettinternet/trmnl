@@ -156,7 +156,7 @@
         {% else %}
           {% assign x = 670 %}
         {% endif %}
-        {% assign y = chart_max | minus: daily_value | times: 238 | divided_by: chart_span | plus: 28 %}
+        {% assign y = chart_max | minus: daily_value | times: 247 | divided_by: chart_span | plus: 29 %}
         {% capture point %}{{ x }},{{ y }} {% endcapture %}
         {% if forloop.index0 < today_index %}
           {% assign history_points = history_points | append: point %}
@@ -182,21 +182,35 @@
   {% assign valley_one_x = valley_one_index | times: 640 | divided_by: history_last_index | plus: 30 %}
   {% assign valley_two_x = valley_two_index | times: 640 | divided_by: history_last_index | plus: 30 %}
 {% endif %}
-{% assign peak_one_y = chart_max | minus: peak_one_value | times: 238 | divided_by: chart_span | plus: 28 %}
-{% assign peak_two_y = chart_max | minus: peak_two_value | times: 238 | divided_by: chart_span | plus: 28 %}
-{% assign peak_three_y = chart_max | minus: peak_three_value | times: 238 | divided_by: chart_span | plus: 28 %}
-{% assign valley_one_y = chart_max | minus: valley_one_value | times: 238 | divided_by: chart_span | plus: 28 %}
-{% assign valley_two_y = chart_max | minus: valley_two_value | times: 238 | divided_by: chart_span | plus: 28 %}
-{% assign peak_one_label_y = peak_one_y | minus: 10 %}
-{% if peak_one_label_y < 18 %}{% assign peak_one_label_y = peak_one_y | plus: 20 %}{% endif %}
-{% assign peak_two_label_y = peak_two_y | plus: 20 %}
-{% if peak_two_label_y > 283 %}{% assign peak_two_label_y = peak_two_y | minus: 10 %}{% endif %}
-{% assign peak_three_label_y = peak_three_y | minus: 10 %}
-{% if peak_three_label_y < 18 %}{% assign peak_three_label_y = peak_three_y | plus: 20 %}{% endif %}
-{% assign valley_one_label_y = valley_one_y | plus: 20 %}
-{% if valley_one_label_y > 283 %}{% assign valley_one_label_y = valley_one_y | minus: 10 %}{% endif %}
-{% assign valley_two_label_y = valley_two_y | plus: 20 %}
-{% if valley_two_label_y > 283 %}{% assign valley_two_label_y = valley_two_y | minus: 10 %}{% endif %}
+{% assign peak_one_y = chart_max | minus: peak_one_value | times: 247 | divided_by: chart_span | plus: 29 %}
+{% assign peak_two_y = chart_max | minus: peak_two_value | times: 247 | divided_by: chart_span | plus: 29 %}
+{% assign peak_three_y = chart_max | minus: peak_three_value | times: 247 | divided_by: chart_span | plus: 29 %}
+{% assign valley_one_y = chart_max | minus: valley_one_value | times: 247 | divided_by: chart_span | plus: 29 %}
+{% assign valley_two_y = chart_max | minus: valley_two_value | times: 247 | divided_by: chart_span | plus: 29 %}
+{% assign label_gap = 12 %}
+{% assign label_below_gap = 20 %}
+{% assign label_top = 18 %}
+{% assign label_bottom = 307 %}
+{% assign peak_one_label_y = peak_one_y | minus: label_gap %}
+{% if peak_one_label_y < label_top %}{% assign peak_one_label_y = peak_one_y | plus: label_below_gap %}{% endif %}
+{% assign peak_two_label_y = peak_two_y | minus: label_gap %}
+{% if peak_two_label_y < label_top %}{% assign peak_two_label_y = peak_two_y | plus: label_below_gap %}{% endif %}
+{% assign peak_three_label_y = peak_three_y | minus: label_gap %}
+{% if peak_three_label_y < label_top %}{% assign peak_three_label_y = peak_three_y | plus: label_below_gap %}{% endif %}
+{% assign valley_one_label_y = valley_one_y | plus: label_below_gap %}
+{% if valley_one_label_y > label_bottom %}{% assign valley_one_label_y = valley_one_y | minus: label_gap %}{% endif %}
+{% assign valley_two_label_y = valley_two_y | plus: label_below_gap %}
+{% if valley_two_label_y > label_bottom %}{% assign valley_two_label_y = valley_two_y | minus: label_gap %}{% endif %}
+{% assign peak_one_label_anchor = "middle" %}
+{% if peak_one_x < 80 %}{% assign peak_one_label_anchor = "start" %}{% elsif peak_one_x > 620 %}{% assign peak_one_label_anchor = "end" %}{% endif %}
+{% assign peak_two_label_anchor = "middle" %}
+{% if peak_two_x < 80 %}{% assign peak_two_label_anchor = "start" %}{% elsif peak_two_x > 620 %}{% assign peak_two_label_anchor = "end" %}{% endif %}
+{% assign peak_three_label_anchor = "middle" %}
+{% if peak_three_x < 80 %}{% assign peak_three_label_anchor = "start" %}{% elsif peak_three_x > 620 %}{% assign peak_three_label_anchor = "end" %}{% endif %}
+{% assign valley_one_label_anchor = "middle" %}
+{% if valley_one_x < 80 %}{% assign valley_one_label_anchor = "start" %}{% elsif valley_one_x > 620 %}{% assign valley_one_label_anchor = "end" %}{% endif %}
+{% assign valley_two_label_anchor = "middle" %}
+{% if valley_two_x < 80 %}{% assign valley_two_label_anchor = "start" %}{% elsif valley_two_x > 620 %}{% assign valley_two_label_anchor = "end" %}{% endif %}
 
 <div class="view view--full air-quality-history">
   <style>
@@ -224,30 +238,30 @@
   </section>
 
   <section class="air-quality-history__chart">
-    <svg viewBox="0 0 760 312.5" preserveAspectRatio="xMidYMid meet" role="img">
-      {% if has_series and forecast_count > 0 %}<rect class="air-quality-history__forecast-zone" x="670" y="15" width="60" height="263" rx="3" />{% endif %}
+    <svg viewBox="0 0 760 325" preserveAspectRatio="xMidYMid meet" role="img">
+      {% if has_series and forecast_count > 0 %}<rect class="air-quality-history__forecast-zone" x="670" y="16" width="60" height="273" rx="3" />{% endif %}
       {% if history_points != blank %}<polyline class="air-quality-history__history" points="{{ history_points }}" />{% endif %}
       {% if forecast_points != blank %}<polyline class="air-quality-history__forecast" points="{{ forecast_points }}" />{% endif %}
-      {% if has_series and forecast_count > 0 %}<line class="air-quality-history__today" x1="670" y1="15" x2="670" y2="278" />{% endif %}
+      {% if has_series and forecast_count > 0 %}<line class="air-quality-history__today" x1="670" y1="16" x2="670" y2="289" />{% endif %}
       {% if peak_one_value >= 0 %}
         <circle class="air-quality-history__peak" cx="{{ peak_one_x }}" cy="{{ peak_one_y }}" r="3.5" />
-        <text class="air-quality-history__peak-label" x="{{ peak_one_x | plus: 8 }}" y="{{ peak_one_label_y }}">{{ peak_one_value | round }} · {{ peak_one_date | append: "T12:00" | date: "%b %d" }}</text>
+        <text class="air-quality-history__peak-label" x="{{ peak_one_x }}" y="{{ peak_one_label_y }}" text-anchor="{{ peak_one_label_anchor }}">{{ peak_one_value | round }} · {{ peak_one_date | append: "T12:00" | date: "%b %d" }}</text>
       {% endif %}
       {% if peak_two_value >= 0 %}
         <circle class="air-quality-history__peak" cx="{{ peak_two_x }}" cy="{{ peak_two_y }}" r="3.5" />
-        <text class="air-quality-history__peak-label" x="{{ peak_two_x | plus: 8 }}" y="{{ peak_two_label_y }}">{{ peak_two_value | round }} · {{ peak_two_date | append: "T12:00" | date: "%b %d" }}</text>
+        <text class="air-quality-history__peak-label" x="{{ peak_two_x }}" y="{{ peak_two_label_y }}" text-anchor="{{ peak_two_label_anchor }}">{{ peak_two_value | round }} · {{ peak_two_date | append: "T12:00" | date: "%b %d" }}</text>
       {% endif %}
       {% if peak_three_value >= 0 %}
         <circle class="air-quality-history__peak" cx="{{ peak_three_x }}" cy="{{ peak_three_y }}" r="3.5" />
-        <text class="air-quality-history__peak-label" x="{{ peak_three_x | minus: 8 }}" y="{{ peak_three_label_y }}" text-anchor="end">{{ peak_three_value | round }} · {{ peak_three_date | append: "T12:00" | date: "%b %d" }}</text>
+        <text class="air-quality-history__peak-label" x="{{ peak_three_x }}" y="{{ peak_three_label_y }}" text-anchor="{{ peak_three_label_anchor }}">{{ peak_three_value | round }} · {{ peak_three_date | append: "T12:00" | date: "%b %d" }}</text>
       {% endif %}
       {% if valley_one_value < 9999 and valley_one_index != peak_one_index and valley_one_index != peak_two_index and valley_one_index != peak_three_index %}
         <circle class="air-quality-history__valley" cx="{{ valley_one_x }}" cy="{{ valley_one_y }}" r="3.5" />
-        <text class="air-quality-history__valley-label" x="{{ valley_one_x | plus: 8 }}" y="{{ valley_one_label_y }}">{{ valley_one_value | round }} · {{ valley_one_date | append: "T12:00" | date: "%b %d" }}</text>
+        <text class="air-quality-history__valley-label" x="{{ valley_one_x }}" y="{{ valley_one_label_y }}" text-anchor="{{ valley_one_label_anchor }}">{{ valley_one_value | round }} · {{ valley_one_date | append: "T12:00" | date: "%b %d" }}</text>
       {% endif %}
       {% if valley_two_value < 9999 and valley_two_index != peak_one_index and valley_two_index != peak_two_index and valley_two_index != peak_three_index %}
         <circle class="air-quality-history__valley" cx="{{ valley_two_x }}" cy="{{ valley_two_y }}" r="3.5" />
-        <text class="air-quality-history__valley-label" x="{{ valley_two_x | minus: 8 }}" y="{{ valley_two_label_y }}" text-anchor="end">{{ valley_two_value | round }} · {{ valley_two_date | append: "T12:00" | date: "%b %d" }}</text>
+        <text class="air-quality-history__valley-label" x="{{ valley_two_x }}" y="{{ valley_two_label_y }}" text-anchor="{{ valley_two_label_anchor }}">{{ valley_two_value | round }} · {{ valley_two_date | append: "T12:00" | date: "%b %d" }}</text>
       {% endif %}
     </svg>
   </section>
