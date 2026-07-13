@@ -124,7 +124,7 @@
 {% assign autumn_peak_label_y = autumn_peak_y | minus: label_gap %}
 {% assign spring_peak_label_y = spring_peak_y | minus: label_gap %}
 {% assign peak_high_label_y = peak_high_y | minus: label_gap %}
-{% assign peak_low_label_y = peak_low_y | minus: label_gap %}
+{% assign peak_low_label_y = peak_low_y | plus: label_below_gap %}
 {% assign peak_high_label_anchor = "middle" %}
 {% if peak_high_x < 80 %}{% assign peak_high_label_anchor = "start" %}{% elsif peak_high_x > 620 %}{% assign peak_high_label_anchor = "end" %}{% endif %}
 {% assign peak_low_label_anchor = "middle" %}
