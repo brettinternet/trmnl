@@ -18,9 +18,11 @@
     $daysLeft = $daysInYear - $daysPassed;     // remaining days, today included
     $percentComplete = (int) round($daysPassed / $daysInYear * 100);
 
-    $weeks = 52;
     $daysPerWeek = 7;
     $gridStart = $today->copy()->startOfYear()->startOfWeek(Carbon::SUNDAY);
+    $yearEnd = $today->copy()->endOfYear()->startOfDay();
+    $calendarDays = $gridStart->diffInDays($yearEnd) + 1;
+    $weeks = (int) ceil($calendarDays / $daysPerWeek);
 
     $stateFor = function (Carbon $date) use ($today, $year): string {
         if ((int) $date->format('Y') !== $year) {
