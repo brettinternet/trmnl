@@ -104,6 +104,10 @@
 {% assign today_x = 670 %}
 {% assign peak_high_x = peak_high_index | times: 640 | divided_by: today_index | plus: 30 %}
 {% assign peak_low_x = peak_low_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign autumn_peak_x = autumn_peak_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign spring_peak_x = spring_peak_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign autumn_valley_x = autumn_valley_index | times: 640 | divided_by: today_index | plus: 30 %}
+{% assign spring_valley_x = spring_valley_index | times: 640 | divided_by: today_index | plus: 30 %}
 {% assign peak_high_y = chart_max | minus: peak_high | times: 247 | divided_by: chart_span | plus: 29 %}
 {% assign peak_low_y = chart_max | minus: peak_low | times: 247 | divided_by: chart_span | plus: 29 %}
 {% assign autumn_peak_y = chart_max | minus: autumn_peak | times: 247 | divided_by: chart_span | plus: 29 %}
