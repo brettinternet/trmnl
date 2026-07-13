@@ -149,7 +149,9 @@
     .weather-history { box-sizing: border-box; color: #111; display: grid; gap: 32px; grid-template-columns: 170px 1fr; height: 100%; padding: 38px 42px; width: 100%; }
     .weather-history__current { align-self: center; border-right: 1px solid #d1d1d1; padding: 30px 32px 30px 0; text-align: center; }
     .weather-history__title { color: #333; font-size: 15px; font-weight: 700; letter-spacing: .04em; margin-bottom: 12px; }
-    .weather-history__temp { font-size: 48px; font-weight: 400; letter-spacing: -.09em; line-height: .82; white-space: nowrap; }
+    .weather-history__temp { align-items: center; display: flex; flex-direction: column; gap: 14px; }
+    .weather-history__temp-value { font-size: 48px; font-weight: 400; letter-spacing: -.09em; line-height: .82; white-space: nowrap; }
+    .weather-history__temp-divider { border-top: 1px solid #d1d1d1; width: 56px; }
     .weather-history__chart { align-self: center; min-width: 0; }
     .weather-history svg { display: block; height: 340px; overflow: visible; width: 100%; }
     .weather-history__history-mean { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
@@ -167,7 +169,11 @@
   {% if data.current.time and data.daily.time and data.daily.temperature_2m_max and data.daily.temperature_2m_min %}
     <section class="weather-history__current">
       <div class="weather-history__title">Temperature</div>
-      <div class="weather-history__temp">{{ today_high | round }}{{ degree }} / {{ today_low | round }}{{ degree }}</div>
+      <div class="weather-history__temp">
+        <span class="weather-history__temp-value">{{ today_high | round }}{{ degree }}</span>
+        <span class="weather-history__temp-divider" aria-hidden="true"></span>
+        <span class="weather-history__temp-value">{{ today_low | round }}{{ degree }}</span>
+      </div>
     </section>
 
     <section class="weather-history__chart">
