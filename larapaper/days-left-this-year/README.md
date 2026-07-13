@@ -2,9 +2,8 @@
 
 Import this directory as a LaraPaper recipe plugin archive.
 
-A Stoic-calendar style view of the current year: one cell per day in the
-fixed 52-week Sunday-aligned window, filled for days already passed, shaded
-for days still ahead, and mid-gray for today.
+A Stoic-calendar style view of the current year: one cell per day, filled
+for days already passed, shaded for days still ahead, and mid-gray for today.
 
 ## Files
 
@@ -24,8 +23,8 @@ for days still ahead, and mid-gray for today.
 - **Days Passed** — fully completed days before today.
 - **Days Left** — remaining days, including today (`Days Passed + Days Left` =
   total days in the year).
-- **Grid** — 7 rows and 52 columns, with Sunday as the first square in each week. The fixed 52-week display has 364 day slots; year-end dates beyond that fixed window are not rendered.
+- **Grid** — 52 outer columns, with Sunday as the first square in each nested week. Years whose Sunday-aligned calendar spans 53 or 54 weeks render the overflow weeks explicitly inside the final outer column, so every calendar date remains represented.
 - **Title bar** — the year and the percentage of the year completed.
 
-The counters use the full calendar year, including all 366 days in leap years;
-the grid remains a fixed 52 weeks.
+The counters and grid use the full calendar year, including all 366 days in
+leap years.
