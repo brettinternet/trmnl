@@ -8,12 +8,8 @@
 {% assign history_total = 0 %}
 {% assign history_count = 0 %}
 {% assign snowy_days = 0 %}
-{% assign peak_one_value = 0 %}
-{% assign peak_two_value = 0 %}
-{% assign peak_three_value = 0 %}
-{% assign peak_one_index = 0 %}
-{% assign peak_two_index = 0 %}
-{% assign peak_three_index = 0 %}
+{% assign first_snow_index = -1 %}
+{% assign last_snow_index = -1 %}
 {% assign chart_max = 0 %}
 {% assign history_points = "" %}
 {% assign forecast_points = "" %}
@@ -32,9 +28,6 @@
   {% if today_index >= 0 %}
     {% assign history_span = today_index %}
     {% if history_span < 1 %}{% assign history_span = 1 %}{% endif %}
-    {% assign history_segment = today_index | divided_by: 3 %}
-    {% if history_segment < 1 %}{% assign history_segment = 1 %}{% endif %}
-    {% assign segment_three_start = history_segment | times: 2 %}
     {% assign forecast_day_count = point_count | minus: today_index %}
     {% assign forecast_span = forecast_day_count %}
     {% if forecast_span < 1 %}{% assign forecast_span = 1 %}{% endif %}
@@ -49,20 +42,8 @@
             {% assign history_count = history_count | plus: 1 %}
             {% if snowfall_value >= snowy_threshold %}
               {% assign snowy_days = snowy_days | plus: 1 %}
-            {% endif %}
-            {% if i < history_segment %}
-              {% if snowfall_value > peak_one_value %}
-                {% assign peak_one_value = snowfall_value %}
-                {% assign peak_one_index = i %}
-              {% endif %}
-            {% elsif i < segment_three_start %}
-              {% if snowfall_value > peak_two_value %}
-                {% assign peak_two_value = snowfall_value %}
-                {% assign peak_two_index = i %}
-              {% endif %}
-            {% elsif snowfall_value > peak_three_value %}
-              {% assign peak_three_value = snowfall_value %}
-              {% assign peak_three_index = i %}
+              {% if first_snow_index < 0 %}{% assign first_snow_index = i %}{% endif %}
+              {% assign last_snow_index = i %}
             {% endif %}
           {% endif %}
         {% endif %}
@@ -76,6 +57,9 @@
 {% assign plot_top = 42 %}
 {% assign plot_bottom = 283 %}
 {% assign plot_height = 241 %}
+{% assign season_span_y = plot_bottom | plus: 8 %}
+{% assign season_boundary_y = plot_bottom | plus: 12 %}
+{% assign season_label_gap = 24 %}
 
 {% if history_count > 0 %}
   {% for i in (0..point_count) %}
@@ -102,26 +86,14 @@
   {% endfor %}
 {% endif %}
 
-{% assign peak_one_x = peak_one_index | times: 640 | divided_by: history_span | plus: 20 %}
-{% assign peak_two_x = peak_two_index | times: 640 | divided_by: history_span | plus: 20 %}
-{% assign peak_three_x = peak_three_index | times: 640 | divided_by: history_span | plus: 20 %}
-{% assign peak_one_y_offset = peak_one_value | times: plot_height | divided_by: chart_span %}
-{% assign peak_two_y_offset = peak_two_value | times: plot_height | divided_by: chart_span %}
-{% assign peak_three_y_offset = peak_three_value | times: plot_height | divided_by: chart_span %}
-{% assign peak_one_y = plot_bottom | minus: peak_one_y_offset %}
-{% assign peak_two_y = plot_bottom | minus: peak_two_y_offset %}
-{% assign peak_three_y = plot_bottom | minus: peak_three_y_offset %}
-{% assign label_gap = 12 %}
-{% assign label_below_gap = 20 %}
-{% assign peak_one_label_y = peak_one_y | minus: label_gap %}
-{% assign peak_two_label_y = peak_two_y | minus: label_gap %}
-{% assign peak_three_label_y = peak_three_y | minus: label_gap %}
-{% assign peak_one_label_anchor = "middle" %}
-{% if peak_one_x < 80 %}{% assign peak_one_label_anchor = "start" %}{% elsif peak_one_x > 620 %}{% assign peak_one_label_anchor = "end" %}{% endif %}
-{% assign peak_two_label_anchor = "middle" %}
-{% if peak_two_x < 80 %}{% assign peak_two_label_anchor = "start" %}{% elsif peak_two_x > 620 %}{% assign peak_two_label_anchor = "end" %}{% endif %}
-{% assign peak_three_label_anchor = "middle" %}
-{% if peak_three_x < 80 %}{% assign peak_three_label_anchor = "start" %}{% elsif peak_three_x > 620 %}{% assign peak_three_label_anchor = "end" %}{% endif %}
+{% assign first_snow_x = first_snow_index | times: 640 | divided_by: history_span | plus: 20 %}
+{% assign last_snow_x = last_snow_index | times: 640 | divided_by: history_span | plus: 20 %}
+{% assign first_snow_label_y = plot_bottom | plus: season_label_gap %}
+{% assign last_snow_label_y = plot_bottom | plus: season_label_gap %}
+{% assign first_snow_label_anchor = "middle" %}
+{% if first_snow_x < 80 %}{% assign first_snow_label_anchor = "start" %}{% elsif first_snow_x > 620 %}{% assign first_snow_label_anchor = "end" %}{% endif %}
+{% assign last_snow_label_anchor = "middle" %}
+{% if last_snow_x < 80 %}{% assign last_snow_label_anchor = "start" %}{% elsif last_snow_x > 620 %}{% assign last_snow_label_anchor = "end" %}{% endif %}
 
 <div class="view view--full snowfall-history">
   <style>
@@ -137,8 +109,9 @@
     .snowfall-history__history { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
     .snowfall-history__forecast { fill: none; stroke: #666; stroke-dasharray: 5 5; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
     .snowfall-history__today { stroke: #999; stroke-dasharray: 2 4; stroke-width: 1; }
-    .snowfall-history__peak { fill: #111; }
-    .snowfall-history__peak-label { fill: #111; font-size: 12px; font-weight: 900; }
+    .snowfall-history__season-span { stroke: #111; stroke-linecap: round; stroke-width: 2; }
+    .snowfall-history__season-boundary { stroke: #111; stroke-dasharray: 2 3; stroke-width: 1; }
+    .snowfall-history__season-label { fill: #111; font-size: 12px; font-weight: 900; }
   </style>
 
   {% if history_count > 0 %}
@@ -155,17 +128,12 @@
         <polyline class="snowfall-history__history" points="{{ history_points }}" />
         <polyline class="snowfall-history__forecast" points="{{ forecast_points }}" />
         <line class="snowfall-history__today" x1="660" y1="{{ plot_top }}" x2="660" y2="{{ plot_bottom }}" />
-        {% if peak_one_value > 0 %}
-          <circle class="snowfall-history__peak" cx="{{ peak_one_x }}" cy="{{ peak_one_y }}" r="3.5" />
-          <text class="snowfall-history__peak-label" x="{{ peak_one_x }}" y="{{ peak_one_label_y }}" text-anchor="{{ peak_one_label_anchor }}">{{ peak_one_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_one_index] | append: "T12:00" | date: "%b %d" }}</text>
-        {% endif %}
-        {% if peak_two_value > 0 %}
-          <circle class="snowfall-history__peak" cx="{{ peak_two_x }}" cy="{{ peak_two_y }}" r="3.5" />
-          <text class="snowfall-history__peak-label" x="{{ peak_two_x }}" y="{{ peak_two_label_y }}" text-anchor="{{ peak_two_label_anchor }}">{{ peak_two_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_two_index] | append: "T12:00" | date: "%b %d" }}</text>
-        {% endif %}
-        {% if peak_three_value > 0 %}
-          <circle class="snowfall-history__peak" cx="{{ peak_three_x }}" cy="{{ peak_three_y }}" r="3.5" />
-          <text class="snowfall-history__peak-label" x="{{ peak_three_x }}" y="{{ peak_three_label_y }}" text-anchor="{{ peak_three_label_anchor }}">{{ peak_three_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_three_index] | append: "T12:00" | date: "%b %d" }}</text>
+        {% if first_snow_index >= 0 and last_snow_index >= 0 %}
+          <line class="snowfall-history__season-span" x1="{{ first_snow_x }}" y1="{{ season_span_y }}" x2="{{ last_snow_x }}" y2="{{ season_span_y }}" />
+          <line class="snowfall-history__season-boundary" x1="{{ first_snow_x }}" y1="{{ plot_bottom }}" x2="{{ first_snow_x }}" y2="{{ season_boundary_y }}" />
+          <line class="snowfall-history__season-boundary" x1="{{ last_snow_x }}" y1="{{ plot_bottom }}" x2="{{ last_snow_x }}" y2="{{ season_boundary_y }}" />
+          <text class="snowfall-history__season-label" x="{{ first_snow_x }}" y="{{ first_snow_label_y }}" text-anchor="{{ first_snow_label_anchor }}">First snow · {{ data.daily.time[first_snow_index] | append: "T12:00" | date: "%b %d" }}</text>
+          <text class="snowfall-history__season-label" x="{{ last_snow_x }}" y="{{ last_snow_label_y }}" text-anchor="{{ last_snow_label_anchor }}">Last snow · {{ data.daily.time[last_snow_index] | append: "T12:00" | date: "%b %d" }}</text>
         {% endif %}
       </svg>
     </section>

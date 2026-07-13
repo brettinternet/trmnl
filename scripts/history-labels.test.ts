@@ -44,12 +44,6 @@ describe("history chart label direction", () => {
         pointPrefix: ["peak_one_y", "peak_two_y", "peak_three_y"],
         offset: "minus: label_gap",
       },
-      {
-        recipe: "snowfall-history",
-        labels: ["peak_one_label_y", "peak_two_label_y", "peak_three_label_y"],
-        pointPrefix: ["peak_one_y", "peak_two_y", "peak_three_y"],
-        offset: "minus: label_gap",
-      },
     ];
 
     for (const expectation of expectations) {
@@ -60,5 +54,40 @@ describe("history chart label direction", () => {
         );
       }
     }
+  });
+  test("labels thresholded historical snow-season boundaries", async () => {
+    const source = await readTemplate("snowfall-history");
+    expect(source).not.toContain("peak_one");
+    expect(source).not.toContain("peak_two");
+    expect(source).not.toContain("peak_three");
+
+    expect(source).toContain(
+      "{% if snowfall_value >= snowy_threshold %}",
+    );
+    expect(source).toContain(
+      "{% if first_snow_index < 0 %}{% assign first_snow_index = i %}{% endif %}",
+    );
+    expect(source).toContain("{% assign last_snow_index = i %}");
+    expect(source).toContain(
+      "{% if first_snow_index >= 0 and last_snow_index >= 0 %}",
+    );
+    expect(source).toContain(
+      "First snow · {{ data.daily.time[first_snow_index]",
+    );
+    expect(source).toContain(
+      "Last snow · {{ data.daily.time[last_snow_index]",
+    );
+    expect(source).toContain(
+      "{% assign first_snow_label_y = plot_bottom | plus: season_label_gap %}",
+    );
+    expect(source).toContain(
+      "{% assign last_snow_label_y = plot_bottom | plus: season_label_gap %}",
+    );
+    expect(source).toContain(
+      '{% assign first_snow_label_anchor = "start" %}',
+    );
+    expect(source).toContain(
+      '{% assign last_snow_label_anchor = "end" %}',
+    );
   });
 });
