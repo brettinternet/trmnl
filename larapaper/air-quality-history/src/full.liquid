@@ -206,7 +206,7 @@
     .air-quality-history__value { font-size: 84px; font-weight: 400; letter-spacing: -.09em; line-height: .82; }
     .air-quality-history__category { color: #333; font-size: 17px; font-weight: 700; line-height: 1.15; margin-top: 18px; }
     .air-quality-history__chart { align-self: center; min-width: 0; }
-    .air-quality-history svg { display: block; height: 280px; overflow: visible; width: 100%; }
+    .air-quality-history svg { display: block; height: 340px; overflow: visible; width: 100%; }
     .air-quality-history__history { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
     .air-quality-history__forecast { fill: none; stroke: #666; stroke-dasharray: 4 4; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
     .air-quality-history__forecast-zone { fill: #ededed; }
@@ -224,7 +224,7 @@
   </section>
 
   <section class="air-quality-history__chart">
-    <svg viewBox="0 0 760 250" role="img">
+    <svg viewBox="0 0 760 250" preserveAspectRatio="none" role="img">
       {% if has_series and forecast_count > 0 %}<rect class="air-quality-history__forecast-zone" x="670" y="12" width="60" height="210" rx="3" />{% endif %}
       {% if history_points != blank %}<polyline class="air-quality-history__history" points="{{ history_points }}" />{% endif %}
       {% if forecast_points != blank %}<polyline class="air-quality-history__forecast" points="{{ forecast_points }}" />{% endif %}

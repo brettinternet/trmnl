@@ -147,7 +147,7 @@
     .weather-history__title { color: #333; font-size: 15px; font-weight: 700; letter-spacing: .04em; margin-bottom: 12px; }
     .weather-history__temp { font-size: 48px; font-weight: 400; letter-spacing: -.09em; line-height: .82; white-space: nowrap; }
     .weather-history__chart { align-self: center; min-width: 0; }
-    .weather-history svg { display: block; height: 280px; overflow: visible; width: 100%; }
+    .weather-history svg { display: block; height: 340px; overflow: visible; width: 100%; }
     .weather-history__history-mean { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
     .weather-history__history-bound { fill: none; stroke: #aaa; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
     .weather-history__forecast { fill: none; stroke: #555; stroke-dasharray: 4 4; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
@@ -167,7 +167,7 @@
     </section>
 
     <section class="weather-history__chart">
-      <svg viewBox="0 0 760 250" role="img" aria-label="Daily mean, high, and low temperatures over the past year with a seven day forecast">
+      <svg viewBox="0 0 760 250" preserveAspectRatio="none" role="img" aria-label="Daily mean, high, and low temperatures over the past year with a seven day forecast">
         <rect class="weather-history__forecast-zone" x="{{ today_x }}" y="12" width="{{ 730 | minus: today_x }}" height="210" rx="3" />
         <polyline class="weather-history__history-bound" points="{{ history_high_points }}" />
         <polyline class="weather-history__history-bound" points="{{ history_low_points }}" />

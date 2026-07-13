@@ -123,7 +123,7 @@
     .snowfall-history__value { font-size: 76px; font-weight: 400; letter-spacing: -.09em; line-height: .84; white-space: nowrap; }
     .snowfall-history__descriptor { color: #333; font-size: 17px; font-weight: 700; margin-top: 18px; }
     .snowfall-history__chart { align-self: center; min-width: 0; }
-    .snowfall-history svg { display: block; height: 280px; overflow: visible; width: 100%; }
+    .snowfall-history svg { display: block; height: 340px; overflow: visible; width: 100%; }
     .snowfall-history__forecast-zone { fill: #ededed; }
     .snowfall-history__baseline { stroke: #b8b8b8; stroke-width: 1; }
     .snowfall-history__history { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
@@ -141,7 +141,7 @@
     </section>
 
     <section class="snowfall-history__chart">
-      <svg viewBox="0 0 760 250" role="img" aria-label="Daily snowfall history and forecast">
+      <svg viewBox="0 0 760 250" preserveAspectRatio="none" role="img" aria-label="Daily snowfall history and forecast">
         <rect class="snowfall-history__forecast-zone" x="660" y="14" width="80" height="218" rx="3" />
         <line class="snowfall-history__baseline" x1="20" y1="232" x2="740" y2="232" />
         <polyline class="snowfall-history__history" points="{{ history_points }}" />
