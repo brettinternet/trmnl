@@ -83,9 +83,9 @@
       {% assign mean = data.daily.temperature_2m_mean[i] | plus: 0 %}
       {% assign high = data.daily.temperature_2m_max[i] | plus: 0 %}
       {% assign low = data.daily.temperature_2m_min[i] | plus: 0 %}
-      {% assign mean_y = chart_max | minus: mean | times: 190 | divided_by: chart_span | plus: 22 %}
-      {% assign high_y = chart_max | minus: high | times: 190 | divided_by: chart_span | plus: 22 %}
-      {% assign low_y = chart_max | minus: low | times: 190 | divided_by: chart_span | plus: 22 %}
+      {% assign mean_y = chart_max | minus: mean | times: 238 | divided_by: chart_span | plus: 28 %}
+      {% assign high_y = chart_max | minus: high | times: 238 | divided_by: chart_span | plus: 28 %}
+      {% assign low_y = chart_max | minus: low | times: 238 | divided_by: chart_span | plus: 28 %}
       {% capture mean_point %}{{ x }},{{ mean_y }} {% endcapture %}
       {% capture high_point %}{{ x }},{{ high_y }} {% endcapture %}
       {% capture low_point %}{{ x }},{{ low_y }} {% endcapture %}
@@ -104,40 +104,40 @@
 {% assign today_x = 670 %}
 {% assign peak_high_x = peak_high_index | times: 640 | divided_by: today_index | plus: 30 %}
 {% assign peak_low_x = peak_low_index | times: 640 | divided_by: today_index | plus: 30 %}
-{% assign peak_high_y = chart_max | minus: peak_high | times: 190 | divided_by: chart_span | plus: 22 %}
-{% assign peak_low_y = chart_max | minus: peak_low | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign peak_high_y = chart_max | minus: peak_high | times: 238 | divided_by: chart_span | plus: 28 %}
+{% assign peak_low_y = chart_max | minus: peak_low | times: 238 | divided_by: chart_span | plus: 28 %}
 {% assign autumn_peak_x = autumn_peak_index | times: 640 | divided_by: today_index | plus: 30 %}
 {% assign spring_peak_x = spring_peak_index | times: 640 | divided_by: today_index | plus: 30 %}
-{% assign autumn_peak_y = chart_max | minus: autumn_peak | times: 190 | divided_by: chart_span | plus: 22 %}
-{% assign spring_peak_y = chart_max | minus: spring_peak | times: 190 | divided_by: chart_span | plus: 22 %}
+{% assign autumn_peak_y = chart_max | minus: autumn_peak | times: 238 | divided_by: chart_span | plus: 28 %}
+{% assign spring_peak_y = chart_max | minus: spring_peak | times: 238 | divided_by: chart_span | plus: 28 %}
 {% assign autumn_valley_x = autumn_valley_index | times: 640 | divided_by: today_index | plus: 30 %}
 {% assign spring_valley_x = spring_valley_index | times: 640 | divided_by: today_index | plus: 30 %}
-{% assign autumn_valley_y = chart_max | minus: autumn_valley | times: 190 | divided_by: chart_span | plus: 22 %}
-{% assign spring_valley_y = chart_max | minus: spring_valley | times: 190 | divided_by: chart_span | plus: 22 %}
-{% assign autumn_valley_label_y = autumn_valley_y | plus: 16 %}
-{% if autumn_valley_label_y > 225 %}{% assign autumn_valley_label_y = autumn_valley_y | minus: 8 %}{% endif %}
-{% assign spring_valley_label_y = spring_valley_y | plus: 16 %}
-{% if spring_valley_label_y > 225 %}{% assign spring_valley_label_y = spring_valley_y | minus: 8 %}{% endif %}
+{% assign autumn_valley_y = chart_max | minus: autumn_valley | times: 238 | divided_by: chart_span | plus: 28 %}
+{% assign spring_valley_y = chart_max | minus: spring_valley | times: 238 | divided_by: chart_span | plus: 28 %}
+{% assign autumn_valley_label_y = autumn_valley_y | plus: 20 %}
+{% if autumn_valley_label_y > 281 %}{% assign autumn_valley_label_y = autumn_valley_y | minus: 10 %}{% endif %}
+{% assign spring_valley_label_y = spring_valley_y | plus: 20 %}
+{% if spring_valley_label_y > 281 %}{% assign spring_valley_label_y = spring_valley_y | minus: 10 %}{% endif %}
 {% assign autumn_valley_anchor = "start" %}
 {% assign autumn_valley_label_x = autumn_valley_x | plus: 7 %}
 {% if autumn_valley_x > 620 %}{% assign autumn_valley_anchor = "end" %}{% assign autumn_valley_label_x = autumn_valley_x | minus: 7 %}{% endif %}
 {% assign spring_valley_anchor = "start" %}
 {% assign spring_valley_label_x = spring_valley_x | plus: 7 %}
 {% if spring_valley_x > 620 %}{% assign spring_valley_anchor = "end" %}{% assign spring_valley_label_x = spring_valley_x | minus: 7 %}{% endif %}
-{% assign autumn_peak_label_y = autumn_peak_y | plus: 16 %}
-{% if autumn_peak_label_y > 225 %}{% assign autumn_peak_label_y = autumn_peak_y | minus: 8 %}{% endif %}
-{% assign spring_peak_label_y = spring_peak_y | minus: 8 %}
-{% if spring_peak_label_y < 12 %}{% assign spring_peak_label_y = spring_peak_y | plus: 16 %}{% endif %}
+{% assign autumn_peak_label_y = autumn_peak_y | plus: 20 %}
+{% if autumn_peak_label_y > 281 %}{% assign autumn_peak_label_y = autumn_peak_y | minus: 10 %}{% endif %}
+{% assign spring_peak_label_y = spring_peak_y | minus: 10 %}
+{% if spring_peak_label_y < 15 %}{% assign spring_peak_label_y = spring_peak_y | plus: 20 %}{% endif %}
 {% assign peak_high_anchor = "start" %}
 {% assign peak_high_label_x = peak_high_x | plus: 7 %}
 {% if peak_high_x > 620 %}{% assign peak_high_anchor = "end" %}{% assign peak_high_label_x = peak_high_x | minus: 7 %}{% endif %}
 {% assign peak_low_anchor = "start" %}
 {% assign peak_low_label_x = peak_low_x | plus: 7 %}
 {% if peak_low_x > 620 %}{% assign peak_low_anchor = "end" %}{% assign peak_low_label_x = peak_low_x | minus: 7 %}{% endif %}
-{% assign peak_high_label_y = peak_high_y | minus: 8 %}
-{% if peak_high_label_y < 12 %}{% assign peak_high_label_y = peak_high_y | plus: 16 %}{% endif %}
-{% assign peak_low_label_y = peak_low_y | plus: 16 %}
-{% if peak_low_label_y > 225 %}{% assign peak_low_label_y = peak_low_y | minus: 8 %}{% endif %}
+{% assign peak_high_label_y = peak_high_y | minus: 10 %}
+{% if peak_high_label_y < 15 %}{% assign peak_high_label_y = peak_high_y | plus: 20 %}{% endif %}
+{% assign peak_low_label_y = peak_low_y | plus: 20 %}
+{% if peak_low_label_y > 281 %}{% assign peak_low_label_y = peak_low_y | minus: 10 %}{% endif %}
 
 
 <div class="view view--full weather-history">
@@ -167,14 +167,14 @@
     </section>
 
     <section class="weather-history__chart">
-      <svg viewBox="0 0 760 250" preserveAspectRatio="none" role="img" aria-label="Daily mean, high, and low temperatures over the past year with a seven day forecast">
-        <rect class="weather-history__forecast-zone" x="{{ today_x }}" y="12" width="{{ 730 | minus: today_x }}" height="210" rx="3" />
+      <svg viewBox="0 0 760 312.5" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Daily mean, high, and low temperatures over the past year with a seven day forecast">
+        <rect class="weather-history__forecast-zone" x="{{ today_x }}" y="15" width="{{ 730 | minus: today_x }}" height="263" rx="3" />
         <polyline class="weather-history__history-bound" points="{{ history_high_points }}" />
         <polyline class="weather-history__history-bound" points="{{ history_low_points }}" />
         <polyline class="weather-history__history-mean" points="{{ history_mean_points }}" />
         <polyline class="weather-history__forecast" points="{{ forecast_high_points }}" />
         <polyline class="weather-history__forecast" points="{{ forecast_low_points }}" />
-        <line class="weather-history__today" x1="{{ today_x }}" y1="12" x2="{{ today_x }}" y2="222" />
+        <line class="weather-history__today" x1="{{ today_x }}" y1="15" x2="{{ today_x }}" y2="278" />
         <circle class="weather-history__peak" cx="{{ peak_high_x }}" cy="{{ peak_high_y }}" r="3.5" />
         <text class="weather-history__peak-label" x="{{ peak_high_label_x }}" y="{{ peak_high_label_y }}" text-anchor="{{ peak_high_anchor }}">{{ peak_high | round }}{{ degree }} · {{ data.daily.time[peak_high_index] | append: "T12:00" | date: "%b %d" }}</text>
         <circle class="weather-history__peak" cx="{{ autumn_peak_x }}" cy="{{ autumn_peak_y }}" r="3.5" />
