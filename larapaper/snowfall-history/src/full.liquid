@@ -86,8 +86,8 @@
           {% assign forecast_offset = i | minus: today_index %}
           {% assign x = forecast_offset | times: 80 | divided_by: forecast_span | plus: 660 %}
         {% endif %}
-        {% assign y_offset = snowfall_value | times: 248 | divided_by: chart_span %}
-        {% assign y = 290 | minus: y_offset %}
+        {% assign y_offset = snowfall_value | times: 257 | divided_by: chart_span %}
+        {% assign y = 302 | minus: y_offset %}
         {% capture point %}{{ x }},{{ y }} {% endcapture %}
         {% if i < today_index %}
           {% assign history_points = history_points | append: point %}
@@ -102,18 +102,28 @@
 {% assign peak_one_x = peak_one_index | times: 640 | divided_by: history_span | plus: 20 %}
 {% assign peak_two_x = peak_two_index | times: 640 | divided_by: history_span | plus: 20 %}
 {% assign peak_three_x = peak_three_index | times: 640 | divided_by: history_span | plus: 20 %}
-{% assign peak_one_y_offset = peak_one_value | times: 248 | divided_by: chart_span %}
-{% assign peak_two_y_offset = peak_two_value | times: 248 | divided_by: chart_span %}
-{% assign peak_three_y_offset = peak_three_value | times: 248 | divided_by: chart_span %}
-{% assign peak_one_y = 290 | minus: peak_one_y_offset %}
-{% assign peak_two_y = 290 | minus: peak_two_y_offset %}
-{% assign peak_three_y = 290 | minus: peak_three_y_offset %}
-{% assign peak_one_label_y = peak_one_y | minus: 11 %}
-{% if peak_one_label_y < 18 %}{% assign peak_one_label_y = peak_one_y | plus: 21 %}{% endif %}
-{% assign peak_two_label_y = peak_two_y | plus: 21 %}
-{% if peak_two_label_y > 288 %}{% assign peak_two_label_y = peak_two_y | minus: 11 %}{% endif %}
-{% assign peak_three_label_y = peak_three_y | minus: 11 %}
-{% if peak_three_label_y < 18 %}{% assign peak_three_label_y = peak_three_y | plus: 21 %}{% endif %}
+{% assign peak_one_y_offset = peak_one_value | times: 257 | divided_by: chart_span %}
+{% assign peak_two_y_offset = peak_two_value | times: 257 | divided_by: chart_span %}
+{% assign peak_three_y_offset = peak_three_value | times: 257 | divided_by: chart_span %}
+{% assign peak_one_y = 302 | minus: peak_one_y_offset %}
+{% assign peak_two_y = 302 | minus: peak_two_y_offset %}
+{% assign peak_three_y = 302 | minus: peak_three_y_offset %}
+{% assign label_gap = 12 %}
+{% assign label_below_gap = 20 %}
+{% assign label_top = 18 %}
+{% assign label_bottom = 307 %}
+{% assign peak_one_label_y = peak_one_y | minus: label_gap %}
+{% if peak_one_label_y < label_top %}{% assign peak_one_label_y = peak_one_y | plus: label_below_gap %}{% elsif peak_one_label_y > label_bottom %}{% assign peak_one_label_y = peak_one_y | minus: label_gap %}{% endif %}
+{% assign peak_two_label_y = peak_two_y | minus: label_gap %}
+{% if peak_two_label_y < label_top %}{% assign peak_two_label_y = peak_two_y | plus: label_below_gap %}{% elsif peak_two_label_y > label_bottom %}{% assign peak_two_label_y = peak_two_y | minus: label_gap %}{% endif %}
+{% assign peak_three_label_y = peak_three_y | minus: label_gap %}
+{% if peak_three_label_y < label_top %}{% assign peak_three_label_y = peak_three_y | plus: label_below_gap %}{% elsif peak_three_label_y > label_bottom %}{% assign peak_three_label_y = peak_three_y | minus: label_gap %}{% endif %}
+{% assign peak_one_label_anchor = "middle" %}
+{% if peak_one_x < 80 %}{% assign peak_one_label_anchor = "start" %}{% elsif peak_one_x > 620 %}{% assign peak_one_label_anchor = "end" %}{% endif %}
+{% assign peak_two_label_anchor = "middle" %}
+{% if peak_two_x < 80 %}{% assign peak_two_label_anchor = "start" %}{% elsif peak_two_x > 620 %}{% assign peak_two_label_anchor = "end" %}{% endif %}
+{% assign peak_three_label_anchor = "middle" %}
+{% if peak_three_x < 80 %}{% assign peak_three_label_anchor = "start" %}{% elsif peak_three_x > 620 %}{% assign peak_three_label_anchor = "end" %}{% endif %}
 
 <div class="view view--full snowfall-history">
   <style>
@@ -141,23 +151,23 @@
     </section>
 
     <section class="snowfall-history__chart">
-      <svg viewBox="0 0 760 312.5" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Daily snowfall history and forecast">
-        <rect class="snowfall-history__forecast-zone" x="660" y="18" width="80" height="272" rx="3" />
-        <line class="snowfall-history__baseline" x1="20" y1="290" x2="740" y2="290" />
+      <svg viewBox="0 0 760 325" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Daily snowfall history and forecast">
+        <rect class="snowfall-history__forecast-zone" x="660" y="18" width="80" height="284" rx="3" />
+        <line class="snowfall-history__baseline" x1="20" y1="302" x2="740" y2="302" />
         <polyline class="snowfall-history__history" points="{{ history_points }}" />
         <polyline class="snowfall-history__forecast" points="{{ forecast_points }}" />
-        <line class="snowfall-history__today" x1="660" y1="18" x2="660" y2="290" />
+        <line class="snowfall-history__today" x1="660" y1="18" x2="660" y2="302" />
         {% if peak_one_value > 0 %}
           <circle class="snowfall-history__peak" cx="{{ peak_one_x }}" cy="{{ peak_one_y }}" r="3.5" />
-          <text class="snowfall-history__peak-label" x="{{ peak_one_x | plus: 8 }}" y="{{ peak_one_label_y }}">{{ peak_one_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_one_index] | append: "T12:00" | date: "%b %d" }}</text>
+          <text class="snowfall-history__peak-label" x="{{ peak_one_x }}" y="{{ peak_one_label_y }}" text-anchor="{{ peak_one_label_anchor }}">{{ peak_one_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_one_index] | append: "T12:00" | date: "%b %d" }}</text>
         {% endif %}
         {% if peak_two_value > 0 %}
           <circle class="snowfall-history__peak" cx="{{ peak_two_x }}" cy="{{ peak_two_y }}" r="3.5" />
-          <text class="snowfall-history__peak-label" x="{{ peak_two_x | plus: 8 }}" y="{{ peak_two_label_y }}">{{ peak_two_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_two_index] | append: "T12:00" | date: "%b %d" }}</text>
+          <text class="snowfall-history__peak-label" x="{{ peak_two_x }}" y="{{ peak_two_label_y }}" text-anchor="{{ peak_two_label_anchor }}">{{ peak_two_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_two_index] | append: "T12:00" | date: "%b %d" }}</text>
         {% endif %}
         {% if peak_three_value > 0 %}
           <circle class="snowfall-history__peak" cx="{{ peak_three_x }}" cy="{{ peak_three_y }}" r="3.5" />
-          <text class="snowfall-history__peak-label" x="{{ peak_three_x | minus: 8 }}" y="{{ peak_three_label_y }}" text-anchor="end">{{ peak_three_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_three_index] | append: "T12:00" | date: "%b %d" }}</text>
+          <text class="snowfall-history__peak-label" x="{{ peak_three_x }}" y="{{ peak_three_label_y }}" text-anchor="{{ peak_three_label_anchor }}">{{ peak_three_value | round: 2 }} {{ unit_label }} · {{ data.daily.time[peak_three_index] | append: "T12:00" | date: "%b %d" }}</text>
         {% endif %}
       </svg>
     </section>
