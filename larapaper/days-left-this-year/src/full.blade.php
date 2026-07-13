@@ -18,12 +18,18 @@
     $daysLeft = $daysInYear - $daysPassed;     // remaining days, today included
     $percentComplete = (int) round($daysPassed / $daysInYear * 100);
 
-    $columns = (int) ceil($daysInYear / 7);
+    $weeks = 52;
+    $daysPerWeek = 7;
+    $gridStart = $today->copy()->startOfYear()->startOfWeek(Carbon::SUNDAY);
 
-    $stateFor = function (int $dayNumber) use ($dayOfYear): string {
+    $stateFor = function (Carbon $date) use ($today, $year): string {
+        if ((int) $date->format('Y') !== $year) {
+            return 'year-grid__day--outside';
+        }
+
         return match (true) {
-            $dayNumber < $dayOfYear => 'year-grid__day--past',
-            $dayNumber === $dayOfYear => 'year-grid__day--today',
+            $date->lt($today) => 'year-grid__day--past',
+            $date->isSameDay($today) => 'year-grid__day--today',
             default => 'year-grid__day--future',
         };
     };
@@ -32,7 +38,7 @@
 <style>
     .year-grid {
         display: grid;
-        grid-template-columns: repeat({{ $columns }}, 1fr);
+        grid-template-columns: repeat({{ $weeks }}, 1fr);
         grid-template-rows: repeat(7, 1fr);
         grid-auto-flow: column;
         gap: 3px;
@@ -52,6 +58,7 @@
         background: #d8d8d8;
         box-shadow: inset 0 0 0 1px #9a9a9a;
     }
+    .year-grid__day--outside { visibility: hidden; }
 
     .days-left-this-year .title_bar {
         background: transparent;
@@ -79,8 +86,12 @@
         </div>
 
         <div class="year-grid">
-            @for ($day = 1; $day <= $daysInYear; $day++)
-                <span class="year-grid__day {{ $stateFor($day) }}"></span>
+            @for ($week = 0; $week < $weeks; $week++)
+                @php $weekStart = $gridStart->copy()->addWeeks($week); @endphp
+                @for ($dayOfWeek = 0; $dayOfWeek < $daysPerWeek; $dayOfWeek++)
+                    @php $date = $weekStart->copy()->addDays($dayOfWeek); @endphp
+                    <span class="year-grid__day {{ $stateFor($date) }}"></span>
+                @endfor
             @endfor
         </div>
     </div>
