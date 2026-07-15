@@ -1,0 +1,177 @@
+---
+
+brettinternet-trmnl-air-quality-history:
+  name: 'Air Quality History'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/air-quality-history.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+      renderer: trmnl-liquid
+  author:
+    github: brettinternet
+brettinternet-trmnl-apple-reminders-bridge:
+  name: 'Apple Reminders Bridge'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/apple-reminders-bridge.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet
+brettinternet-trmnl-calvin-and-hobbes-comic:
+  name: 'Calvin and Hobbes Comic'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/calvin-and-hobbes-comic.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet
+brettinternet-trmnl-days-left-this-year:
+  name: 'Days Left This Year'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/days-left-this-year.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet
+brettinternet-trmnl-farside-comic:
+  name: 'Far Side Comic'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/farside-comic.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet
+brettinternet-trmnl-github-commit-graph:
+  name: 'GitHub Commit Graph'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/github-commit-graph.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet
+brettinternet-trmnl-home-assistant-calendar:
+  name: 'Home Assistant Calendar'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/home-assistant-calendar.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet
+brettinternet-trmnl-lds-quotes:
+  name: 'LDS Quotes'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/lds-quotes.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+      renderer: trmnl-liquid
+  author:
+    github: brettinternet
+brettinternet-trmnl-rainfall-history:
+  name: 'Rainfall History'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/rainfall-history.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+      renderer: trmnl-liquid
+  author:
+    github: brettinternet
+brettinternet-trmnl-snowfall-history:
+  name: 'Snowfall History'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/snowfall-history.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+      renderer: trmnl-liquid
+  author:
+    github: brettinternet
+brettinternet-trmnl-weather-glance:
+  name: 'Weather Glance'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/weather-glance.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+      renderer: trmnl-liquid
+  author:
+    github: brettinternet
+brettinternet-trmnl-weather-history:
+  name: 'Weather History'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/weather-history.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+      renderer: trmnl-liquid
+  author:
+    github: brettinternet
+brettinternet-trmnl-weather-map:
+  name: 'Weather Map'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/weather-map.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+      renderer: trmnl-liquid
+  author:
+    github: brettinternet
+brettinternet-trmnl-xkcd-comic:
+  name: 'XKCD Comic'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/xkcd-comic.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet

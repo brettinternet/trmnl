@@ -24,6 +24,16 @@ tasks:
     cmds:
       - mise exec gitleaks -- gitleaks git --redact --verbose --no-banner
 
+  catalog:build:
+    desc: Build disposable LaraPaper catalog ZIP artifacts
+    cmds:
+      - scripts/catalog-build
+
+  catalog:check:
+    desc: Validate catalog metadata and generated ZIP artifacts
+    cmds:
+      - scripts/catalog-check
+
   larapaper:image:prepare:
     desc: Prepare an image for a Larapaper/TRMNL device
     silent: true

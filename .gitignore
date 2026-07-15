@@ -5,3 +5,5 @@ AGENTS.local.md
 .task
 .DS_Store
 .worktrees
+
+/.tmp
