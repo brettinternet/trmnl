@@ -43,8 +43,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate catalog and build archives
+      - name: Validate catalog
         run: scripts/catalog-check
+      - name: Build catalog archives
+        run: scripts/catalog-build
       - name: Create or update catalog release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
