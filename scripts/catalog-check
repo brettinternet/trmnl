@@ -1,0 +1,141 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "open3"
+require "tmpdir"
+require "yaml"
+
+class CatalogError < StandardError; end
+
+def fail!(message)
+  warn "catalog:check: #{message}"
+  exit 1
+end
+
+def load_yaml(path, label)
+  YAML.load_file(path)
+rescue Errno::ENOENT
+  raise CatalogError, "missing #{label}: #{path}"
+rescue Psych::Exception => e
+  raise CatalogError, "malformed #{label} #{path}: #{e.message.lines.first&.strip}"
+end
+
+def mapping!(value, label)
+  raise CatalogError, "#{label} must be a YAML mapping" unless value.is_a?(Hash)
+  value
+end
+
+def required_string!(mapping, key, label)
+  value = mapping[key]
+  raise CatalogError, "#{label} missing #{key}" unless value.is_a?(String) && !value.strip.empty?
+  value
+end
+
+def template_for(source, label)
+  templates = Dir[File.join(source, "full.*")].select do |path|
+    File.file?(path) && (path.end_with?(".liquid") || path.end_with?(".blade.php"))
+  end
+  raise CatalogError, "#{label}: expected exactly one src/full.liquid or src/full.blade.php template" unless templates.length == 1
+  templates.first
+end
+
+def archive_entries(path)
+  stdout, stderr, status = Open3.capture3("unzip", "-Z1", path)
+  raise CatalogError, "cannot inspect #{path}: #{stderr.strip}" unless status.success?
+  stdout.lines.map(&:chomp).reject(&:empty?)
+end
+
+def archive_content(path, entry)
+  stdout, stderr, status = Open3.capture3("unzip", "-p", path, entry)
+  raise CatalogError, "cannot read #{entry} from #{path}: #{stderr.strip}" unless status.success?
+  stdout
+end
+
+root = File.expand_path("..", __dir__)
+catalog_path = ENV["CATALOG_FILE"] || File.join(root, "catalog.yaml")
+recipes_root = File.join(root, "larapaper")
+build_script = File.join(root, "scripts", "catalog-build")
+
+begin
+  catalog = mapping!(load_yaml(catalog_path, "catalog"), "catalog root")
+  raise CatalogError, "catalog must contain at least one entry" if catalog.empty?
+  fail! "missing recipe directory: #{recipes_root}" unless File.directory?(recipes_root)
+
+  recipes = Dir.children(recipes_root).sort.select do |name|
+    File.directory?(File.join(recipes_root, name)) && !name.start_with?(".")
+  end
+  raise CatalogError, "no recipes found under #{recipes_root}" if recipes.empty?
+
+  expected_ids = recipes.map { |slug| "brettinternet-trmnl-#{slug}" }
+  actual_ids = catalog.keys.map(&:to_s)
+  missing = expected_ids - actual_ids
+  extra = actual_ids - expected_ids
+  raise CatalogError, "catalog missing entries: #{missing.join(', ')}" unless missing.empty?
+  raise CatalogError, "catalog has entries without recipes: #{extra.join(', ')}" unless extra.empty?
+
+  recipes.each do |slug|
+    recipe = File.join(recipes_root, slug)
+    source = File.join(recipe, "src")
+    settings_path = File.join(source, "settings.yaml")
+    readme_path = File.join(recipe, "README.md")
+    raise CatalogError, "#{slug}: missing README.md" unless File.file?(readme_path)
+    raise CatalogError, "#{slug}: missing src/settings.yaml" unless File.file?(settings_path)
+    raise CatalogError, "#{slug}: source contains src/settings.yml; canonical file is src/settings.yaml" if File.exist?(File.join(source, "settings.yml"))
+
+    template = template_for(source, slug)
+    settings = mapping!(load_yaml(settings_path, "recipe settings"), "#{slug} settings")
+    source_name = required_string!(settings, "name", "#{slug} settings")
+
+    entry = mapping!(catalog["brettinternet-trmnl-#{slug}"], "catalog entry #{slug}")
+    name = required_string!(entry, "name", "catalog entry #{slug}")
+    raise CatalogError, "#{slug}: catalog name does not match settings name" unless name == source_name
+
+    trmnlp = mapping!(entry["trmnlp"], "catalog entry #{slug}.trmnlp")
+    repo = required_string!(trmnlp, "repo", "#{slug}.trmnlp")
+    zip_url = required_string!(trmnlp, "zip_url", "#{slug}.trmnlp")
+    raise CatalogError, "#{slug}: trmnlp.repo must be https://github.com/brettinternet/trmnl" unless repo == "https://github.com/brettinternet/trmnl"
+    raise CatalogError, "#{slug}: trmnlp.zip_entry_path must be null" unless trmnlp.key?("zip_entry_path") && trmnlp["zip_entry_path"].nil?
+    raise CatalogError, "#{slug}: trmnlp.version must be main" unless trmnlp["version"] == "main"
+    expected_url = "https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/#{slug}.zip"
+    raise CatalogError, "#{slug}: trmnlp.zip_url must be #{expected_url}" unless zip_url == expected_url
+
+    byos = mapping!(entry["byos"], "catalog entry #{slug}.byos")
+    laravel = mapping!(byos["byos_laravel"], "catalog entry #{slug}.byos.byos_laravel")
+    raise CatalogError, "#{slug}: byos.byos_laravel.compatibility must be true" unless laravel["compatibility"] == true
+
+    renderer = laravel["renderer"]
+    if template.end_with?(".liquid")
+      raise CatalogError, "#{slug}: renderer must be trmnl-liquid for src/full.liquid" unless renderer == "trmnl-liquid"
+    elsif laravel.key?("renderer")
+      raise CatalogError, "#{slug}: renderer is only valid for Liquid recipes"
+    end
+  end
+
+  Dir.mktmpdir("catalog-check-") do |tmp|
+    env = { "CATALOG_OUTPUT_DIR" => tmp }
+    stdout, stderr, status = Open3.capture3(env, build_script)
+    raise CatalogError, "build failed: #{(stderr.empty? ? stdout : stderr).strip}" unless status.success?
+
+    recipes.each do |slug|
+      archive = File.join(tmp, "#{slug}.zip")
+      raise CatalogError, "#{slug}: build did not produce #{slug}.zip" unless File.file?(archive)
+      entries = archive_entries(archive)
+      raise CatalogError, "#{slug}: archive is missing README.md" unless entries.include?("README.md")
+      raise CatalogError, "#{slug}: archive is missing src/settings.yml" unless entries.include?("src/settings.yml")
+      raise CatalogError, "#{slug}: archive contains src/settings.yaml" if entries.include?("src/settings.yaml")
+      raise CatalogError, "#{slug}: archive is missing template" unless entries.any? { |entry| entry == "src/full.liquid" || entry == "src/full.blade.php" }
+      raise CatalogError, "#{slug}: archive contains unsafe path" if entries.any? { |entry| entry.start_with?("/") || entry.split("/").include?("..") }
+
+      source_settings = File.binread(File.join(recipes_root, slug, "src", "settings.yaml"))
+      packaged_settings = archive_content(archive, "src/settings.yml")
+      raise CatalogError, "#{slug}: packaged settings differ from source settings.yaml" unless packaged_settings == source_settings
+    end
+  end
+
+  puts "catalog check passed (#{recipes.length} recipes)"
+rescue CatalogError => e
+  fail!(e.message)
+rescue StandardError => e
+  fail!("#{e.class}: #{e.message}")
+end

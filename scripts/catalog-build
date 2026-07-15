@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "open3"
+require "tmpdir"
+
+def fail!(message)
+  warn "catalog:build: #{message}"
+  exit 1
+end
+
+root = File.expand_path("..", __dir__)
+output = ENV["CATALOG_OUTPUT_DIR"] || ENV["TASK_OUTPUT"] || ".tmp/catalog"
+output = File.expand_path(output, root) unless output.start_with?("/")
+
+recipes_root = File.join(root, "larapaper")
+fail!("missing recipe directory: #{recipes_root}") unless File.directory?(recipes_root)
+
+recipes = Dir.children(recipes_root).sort.select do |name|
+  path = File.join(recipes_root, name)
+  File.directory?(path) && !name.start_with?(".")
+end
+fail!("no recipes found under #{recipes_root}") if recipes.empty?
+
+FileUtils.rm_rf(output)
+FileUtils.mkdir_p(output)
+
+Dir.mktmpdir("catalog-build-") do |tmp|
+  recipes.each do |slug|
+    recipe = File.join(recipes_root, slug)
+    source = File.join(recipe, "src")
+    readme = File.join(recipe, "README.md")
+    settings = File.join(source, "settings.yaml")
+
+    fail!("#{slug}: missing README.md") unless File.file?(readme)
+    fail!("#{slug}: missing src/settings.yaml") unless File.file?(settings)
+    fail!("#{slug}: missing src directory") unless File.directory?(source)
+    fail!("#{slug}: source contains src/settings.yml; canonical file is src/settings.yaml") if File.exist?(File.join(source, "settings.yml"))
+
+    templates = Dir[File.join(source, "full.*")].select { |path| File.file?(path) && (path.end_with?("/full.liquid") || path.end_with?("/full.blade.php")) }
+    fail!("#{slug}: expected exactly one src/full.liquid or src/full.blade.php template") unless templates.length == 1
+
+    stage = File.join(tmp, slug)
+    FileUtils.mkdir_p(stage)
+    FileUtils.cp(readme, File.join(stage, "README.md"))
+    FileUtils.cp_r(source, File.join(stage, "src"))
+    FileUtils.mv(File.join(stage, "src", "settings.yaml"), File.join(stage, "src", "settings.yml"))
+
+    archive = File.join(output, "#{slug}.zip")
+    command = ["zip", "-q", "-r", "-X", archive, "README.md", "src"]
+    stdout, stderr, status = Open3.capture3(*command, chdir: stage)
+    fail!("#{slug}: zip failed: #{stderr.strip.empty? ? stdout.strip : stderr.strip}") unless status.success?
+    puts "built #{archive}"
+  end
+end

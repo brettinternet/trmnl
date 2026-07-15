@@ -1,0 +1,58 @@
+name: Catalog
+
+on:
+  pull_request:
+    paths:
+      - catalog.yaml
+      - larapaper/**
+      - scripts/catalog-build
+      - scripts/catalog-check
+      - Taskfile.dist.yaml
+      - .github/workflows/catalog.yml
+  push:
+    branches:
+      - main
+    paths:
+      - catalog.yaml
+      - larapaper/**
+      - scripts/catalog-build
+      - scripts/catalog-check
+      - Taskfile.dist.yaml
+      - .github/workflows/catalog.yml
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check catalog
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate catalog and build archives
+        run: scripts/catalog-check
+
+  publish:
+    name: Publish catalog archives
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate catalog and build archives
+        run: scripts/catalog-check
+      - name: Create or update catalog release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view catalog-artifacts >/dev/null 2>&1; then
+            gh release create catalog-artifacts \
+              --target "$GITHUB_SHA" \
+              --title "Catalog artifacts" \
+              --notes "Generated LaraPaper recipe archives."
+          fi
+          gh release upload catalog-artifacts .tmp/catalog/*.zip --clobber
