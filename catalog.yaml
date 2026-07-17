@@ -163,6 +163,30 @@ brettinternet-trmnl-weather-map:
       renderer: trmnl-liquid
   author:
     github: brettinternet
+brettinternet-trmnl-wikipedia-current-events:
+  name: 'Wikipedia Current Events'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/wikipedia-current-events.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet
+brettinternet-trmnl-wikipedia-featured-article:
+  name: 'Wikipedia Today''s Featured Article'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/wikipedia-featured-article.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet
 brettinternet-trmnl-xkcd-comic:
   name: 'XKCD Comic'
   trmnlp:

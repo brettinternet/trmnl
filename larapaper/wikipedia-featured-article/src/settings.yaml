@@ -1,0 +1,13 @@
+---
+name: Wikipedia Today's Featured Article
+strategy: polling
+polling_verb: get
+polling_url: |
+  https://api.wikimedia.org/feed/v1/wikipedia/en/featured/{{ "now" | date: "%Y/%m/%d" }}
+polling_headers: |
+  Accept: application/json
+  User-Agent: trmnl-larapaper-wikipedia-recipe
+refresh_interval: 3600
+no_screen_padding: "yes"
+dark_mode: "no"
+framework_version: 2.0

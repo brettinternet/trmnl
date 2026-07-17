@@ -20,6 +20,8 @@ Copy `example.env` to `.env` when needed.
 | `larapaper/farside-comic`       | Render one comic from the Far Side daily RSS feed.     |
 | `larapaper/lds-quotes`          | Render a random quote from Gospel Quotes.              |
 | `larapaper/github-commit-graph` | Render GitHub contribution data from GraphQL.          |
+| `larapaper/wikipedia-current-events` | Show selected current-day Wikipedia events.        |
+| `larapaper/wikipedia-featured-article` | Show Wikipedia's featured article with image and QR code. |
 | `larapaper/days-left-this-year` | Stoic-calendar grid of days passed and left this year. |
 
 Import a recipe directory as a LaraPaper plugin archive.
