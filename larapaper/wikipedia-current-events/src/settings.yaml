@@ -3,7 +3,7 @@ name: Wikipedia Current Events
 strategy: polling
 polling_verb: get
 polling_url: |
-  https://en.wikipedia.org/w/api.php?action=parse&page=Portal%3ACurrent_events%2F{{ "now" | date: "%Y_%B_%-d" }}&prop=wikitext&format=json&formatversion=2
+  https://en.wikipedia.org/w/api.php?action=parse&page=Portal%3ACurrent%20events%2F{{ "now" | date: "%Y" }}%20{{ "now" | date: "%B" }}%20{{ "now" | date: "%-d" }}&prop=wikitext&format=json&formatversion=2
 polling_headers: |
   Accept: application/json
   User-Agent: trmnl-larapaper-wikipedia-recipe

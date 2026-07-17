@@ -97,8 +97,6 @@
     if ($totalCharacters > 3200) {
         $eventFontSize = 8;
     }
-    $selectedEvents = $events;
-    $dateLabel = gmdate('l, F j, Y');
     $hasData = $wikitext !== '' && $events !== [];
 @endphp
 
@@ -107,58 +105,32 @@
         background: #ffffff;
         box-sizing: border-box;
         color: #000000;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
         height: 100%;
-        padding: 16px 20px 44px;
+        padding: 18px 22px 42px;
         width: 100%;
     }
 
-    .wikipedia-current-events__header {
-        align-items: baseline;
-        border-bottom: 2px solid #000000;
-        display: flex;
-        flex: 0 0 auto;
-        gap: 12px;
-        justify-content: space-between;
-        padding-bottom: 6px;
-    }
-
-    .wikipedia-current-events__title {
-        font-size: 26px;
-        font-weight: 700;
-        line-height: 1.05;
-    }
-
-    .wikipedia-current-events__date {
-        font-size: 16px;
-        line-height: 1.1;
-        white-space: nowrap;
-    }
-
     .wikipedia-current-events__list {
+        align-content: start;
         display: grid;
-        flex: 1 1 auto;
-        gap: 6px;
+        gap: 9px 18px;
         grid-template-columns: repeat({{ $eventColumns }}, minmax(0, 1fr));
-        min-height: 0;
     }
 
     .wikipedia-current-events__item {
-        border: 1px solid #000000;
         break-inside: avoid;
+        display: grid;
+        gap: 7px;
+        grid-template-columns: auto minmax(0, 1fr);
         min-width: 0;
-        padding: 5px 7px;
+        margin: 0;
+        padding-bottom: 7px;
     }
 
-    .wikipedia-current-events__item-label {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        line-height: 1.1;
-        margin-bottom: 3px;
-        text-transform: uppercase;
+    .wikipedia-current-events__item::before {
+        content: "•";
+        font-size: {{ $eventFontSize }}px;
+        line-height: 1.15;
     }
 
     .wikipedia-current-events__item-text {
@@ -167,63 +139,48 @@
         margin: 0;
     }
 
-
     .wikipedia-current-events__empty {
         align-items: center;
         display: flex;
-        flex: 1 1 auto;
-        flex-direction: column;
+        height: 100%;
         justify-content: center;
         text-align: center;
     }
 
     @media (max-width: 520px) {
+        .wikipedia-current-events {
+            padding: 14px 16px 36px;
+        }
+
         .wikipedia-current-events__list {
+            gap: 7px 12px;
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .wikipedia-current-events__item {
-            padding: 4px 5px;
+            gap: 5px;
+            padding-bottom: 5px;
         }
 
-        .wikipedia-current-events__item-text {
+        .wikipedia-current-events__item-text,
+        .wikipedia-current-events__item::before {
             font-size: 8px;
-        }
-
-        .wikipedia-current-events__title {
-            font-size: 22px;
-        }
-
-        .wikipedia-current-events__date {
-            font-size: 12px;
         }
     }
 </style>
 
 <div class="view view--full wikipedia-current-events">
-    <div class="wikipedia-current-events__header">
-        <div class="wikipedia-current-events__title">Wikipedia Current Events</div>
-        <div class="wikipedia-current-events__date">{{ $dateLabel }}</div>
-    </div>
-
     @if ($hasData)
         <section class="wikipedia-current-events__list" aria-label="Current event descriptions">
-            @foreach ($selectedEvents as $event)
-                <article class="wikipedia-current-events__item">
-                    <div class="wikipedia-current-events__item-label">Event {{ $loop->iteration }}</div>
-                    <p class="wikipedia-current-events__item-text">{{ $event }}</p>
-                </article>
+            @foreach ($events as $event)
+                <p class="wikipedia-current-events__item">
+                    <span class="wikipedia-current-events__item-text">{{ $event }}</span>
+                </p>
             @endforeach
         </section>
     @else
         <div class="wikipedia-current-events__empty">
-            <span class="value value--large">Current events unavailable</span>
-            <span class="label">Wikipedia returned no event descriptions for today.</span>
+            <span class="value value--large">No current events available</span>
         </div>
     @endif
-
-    <div class="title_bar">
-        <span class="title">Wikipedia</span>
-        <span class="instance">Current events</span>
-    </div>
 </div>
