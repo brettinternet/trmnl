@@ -12,7 +12,7 @@ Import this directory as a LaraPaper recipe plugin archive.
 The recipe polls the Wikimedia Action API for today's UTC subpage. LaraPaper expands the date expression when it makes each request:
 
 ```text
-https://en.wikipedia.org/w/api.php?action=parse&page=Portal%3ACurrent%20events%2F{{ "now" | date: "%Y" }}%20{{ "now" | date: "%B" }}%20{{ "now" | date: "%-d" }}&prop=wikitext&format=json&formatversion=2
+https://en.wikipedia.org/w/api.php?action=parse&page=Portal%3ACurrent%20events%2F{{ "now" | date: "%Y" }}%20{{ "now" | date: "%B" }}%20{{ "now" | date: "%e" }}&prop=wikitext&format=json&formatversion=2
 ```
 
 The refresh interval is 900 seconds (15 minutes), which keeps the display current while avoiding a request on every device check-in.
