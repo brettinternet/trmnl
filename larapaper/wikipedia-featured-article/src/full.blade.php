@@ -37,7 +37,7 @@
     if ($title === '') {
         $title = trim(html_entity_decode(strip_tags($display_title), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
-    $title = $title ?: "Today's Featured Article";
+    $title = $title ?: 'Wikipedia';
     $description = $text_value(data_get($article, 'description'));
     $extract = $text_value(data_get($article, 'extract'));
     $article_date = $text_value(data_get($article, 'date'));
@@ -87,13 +87,6 @@
 
     .wfa-header__copy {
         min-width: 0;
-    }
-
-    .wfa-kicker {
-        font-size: 14px;
-        font-weight: 800;
-        letter-spacing: .08em;
-        text-transform: uppercase;
     }
 
     .wfa-title {
@@ -187,43 +180,10 @@
     }
 
     .wfa-qr {
-        align-items: center;
-        display: flex;
-        flex: 0 0 auto;
-        flex-direction: column;
-        font-size: 12px;
-        gap: 3px;
-        text-align: center;
-    }
-
-    .wfa-qr img {
         display: block;
         height: 86px;
         image-rendering: pixelated;
         width: 86px;
-    }
-
-    .wfa-link {
-        border-top: 1px solid #777;
-        flex: 0 0 auto;
-        font-size: 13px;
-        line-height: 1.2;
-        overflow-wrap: anywhere;
-        padding-top: 7px;
-    }
-
-    .wfa-footer {
-        border-top: 1px solid #777;
-        display: flex;
-        flex: 0 0 auto;
-        font-size: 13px;
-        font-weight: 700;
-        justify-content: space-between;
-        padding-top: 7px;
-    }
-
-    .wfa-footer__source {
-        font-weight: 400;
     }
 
     .wfa-error {
@@ -252,7 +212,7 @@
         .wfa-description { font-size: 17px; }
         .wfa-extract { font-size: 15px; }
         .wfa-date { font-size: 12px; }
-        .wfa-qr img { height: 70px; width: 70px; }
+        .wfa-qr { height: 70px; width: 70px; }
     }
 </style>
 
@@ -260,18 +220,13 @@
     <div class="wfa-screen">
         <div class="wfa-error">
             <div class="wfa-error__title">Wikipedia unavailable</div>
-            <div class="wfa-error__detail">Today's featured article could not be loaded.</div>
-        </div>
-        <div class="wfa-footer">
-            <span>Wikipedia</span>
-            <span class="wfa-footer__source">Wikimedia featured feed</span>
+            <div class="wfa-error__detail">Wikipedia article could not be loaded.</div>
         </div>
     </div>
 <?php else: ?>
     <div class="wfa-screen">
         <header class="wfa-header">
             <div class="wfa-header__copy">
-                <div class="wfa-kicker">Today's featured article</div>
                 <h1 class="wfa-title"><?= e($title) ?></h1>
             </div>
             <?php if ($article_date !== ''): ?>
@@ -301,21 +256,11 @@
                 </div>
 
                 <?php if ($qr_url !== ''): ?>
-                    <a class="wfa-qr" href="<?= e($article_url) ?>" target="_blank" rel="noopener noreferrer">
-                        <img src="<?= e($qr_url) ?>" alt="QR code linking to this article">
-                        <span>Scan to read</span>
-                    </a>
+                    <img class="wfa-qr" src="<?= e($qr_url) ?>" alt="QR code">
                 <?php endif; ?>
 
-                <?php if ($article_url !== ''): ?>
-                    <a class="wfa-link" href="<?= e($article_url) ?>" target="_blank" rel="noopener noreferrer">Read on Wikipedia</a>
-                <?php endif; ?>
             </aside>
         </main>
 
-        <footer class="wfa-footer">
-            <span><?= e($title) ?></span>
-            <span class="wfa-footer__source">Wikimedia feed</span>
-        </footer>
     </div>
 <?php endif; ?>
