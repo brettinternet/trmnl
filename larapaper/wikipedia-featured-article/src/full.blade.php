@@ -59,7 +59,7 @@
     }
 
     $qr_url = $article_url !== ''
-        ? 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' . rawurlencode($article_url)
+        ? 'https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=' . rawurlencode($article_url)
         : '';
 ?>
 
@@ -112,7 +112,7 @@
         display: grid;
         flex: 1 1 auto;
         gap: 18px;
-        grid-template-columns: minmax(0, 1fr) minmax(150px, 27%);
+        grid-template-columns: minmax(0, 1fr) minmax(210px, 38%);
         min-height: 0;
     }
 
@@ -180,10 +180,13 @@
     }
 
     .wfa-qr {
+        align-self: flex-start;
         display: block;
-        height: 86px;
+        flex: 0 0 auto;
+        height: 48px;
         image-rendering: pixelated;
-        width: 86px;
+        margin-top: auto;
+        width: 48px;
     }
 
     .wfa-error {
@@ -212,7 +215,7 @@
         .wfa-description { font-size: 17px; }
         .wfa-extract { font-size: 15px; }
         .wfa-date { font-size: 12px; }
-        .wfa-qr { height: 70px; width: 70px; }
+        .wfa-qr { height: 40px; width: 40px; }
     }
 </style>
 
@@ -244,6 +247,10 @@
                 <?php elseif ($description === ''): ?>
                     <div class="wfa-extract">No article description is available.</div>
                 <?php endif; ?>
+
+                <?php if ($qr_url !== ''): ?>
+                    <img class="wfa-qr" src="<?= e($qr_url) ?>" alt="QR code">
+                <?php endif; ?>
             </section>
 
             <aside class="wfa-media">
@@ -254,10 +261,6 @@
                         <div class="wfa-no-image">No image available</div>
                     <?php endif; ?>
                 </div>
-
-                <?php if ($qr_url !== ''): ?>
-                    <img class="wfa-qr" src="<?= e($qr_url) ?>" alt="QR code">
-                <?php endif; ?>
 
             </aside>
         </main>
