@@ -3,8 +3,8 @@ name: Snowfall History
 strategy: polling
 polling_verb: get
 polling_url: |
-  https://historical-forecast-api.open-meteo.com/v1/forecast?latitude={{ latitude | default: 33.03 }}&longitude={{ longitude | default: -84.94 }}&past_days=365&forecast_days=8&daily=snowfall_sum&current=snowfall&timezone=auto&precipitation_unit={% if snowfall_unit == 'cm' %}mm{% else %}inch{% endif %}
-refresh_interval: 180
+  https://historical-forecast-api.open-meteo.com/v1/forecast?latitude={{ latitude | default: 33.03 }}&longitude={{ longitude | default: -84.94 }}&past_days=365&forecast_days=8&daily=snowfall_sum&current=snowfall&timezone=auto&precipitation_unit={% if snowfall_unit == 'cm' %}mm{% else %}inch{% endif %}&models=gfs_seamless
+refresh_interval: 240
 no_screen_padding: "yes"
 dark_mode: "no"
 framework_version: latest

@@ -14,9 +14,9 @@ Shows today’s high and low beside a minimal temperature chart spanning the pre
 - `latitude` and `longitude`: coordinates accepted by Open-Meteo. Defaults are `33.03`, `-84.94`.
 - `temp_unit`: `fahrenheit` or `celsius`.
 
-Use the [Open-Meteo Geocoding API](https://open-meteo.com/en/docs/geocoding-api) to resolve a place name to coordinates. LaraPaper polling accepts one URL, so the recipe uses Open-Meteo's Historical Forecast endpoint: it returns the local date, reconstructed forecast-model history, and the seven-day outlook in one response.
+Use the [Open-Meteo Geocoding API](https://open-meteo.com/en/docs/geocoding-api) to resolve a place name to coordinates. LaraPaper polling accepts one URL, so this recipe uses Open-Meteo's Historical Forecast endpoint with `models=gfs_seamless` to return the local date, reconstructed forecast-model history, and the seven-day outlook in one response. Pinning GFS Seamless instead of Open-Meteo's Best Match trades location-specific model selection for a consistent global model, removes selection variability from the long request, and reduces cold-request work.
 
-The plugin refreshes daily. A year-long response can take longer than a normal forecast request.
+The plugin refreshes daily. Pinning one global model keeps the request shape predictable while retaining the full chart span.
 
 ## Data shown
 
@@ -25,4 +25,4 @@ The plugin refreshes daily. A year-long response can take longer than a normal f
 - Projected maximum and minimum temperatures for the next seven days
 - Peak and valley labels with short month names and dates
 
-The historical series is model-based historical forecast data, not a station observation record.
+The historical series is GFS Seamless model-based historical forecast data, not a station observation record.

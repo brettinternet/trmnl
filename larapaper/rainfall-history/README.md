@@ -14,8 +14,8 @@ Shows a year of daily rainfall as a quiet e-ink chart: the previous 365 days are
 - `latitude` and `longitude`: coordinates accepted by Open-Meteo. Defaults are `33.03`, `-84.94`.
 - `precipitation_unit`: `inch` or `mm`.
 
-Use the [Open-Meteo Geocoding API](https://open-meteo.com/en/docs/geocoding-api) to resolve a place name to coordinates. LaraPaper polling accepts one URL, so this recipe uses Open-Meteo's Historical Forecast endpoint with `past_days=365`, `forecast_days=8`, and only `daily=precipitation_sum`.
+Use the [Open-Meteo Geocoding API](https://open-meteo.com/en/docs/geocoding-api) to resolve a place name to coordinates. LaraPaper polling accepts one URL, so this recipe uses Open-Meteo's Historical Forecast endpoint with `models=gfs_seamless`, `past_days=365`, `forecast_days=8`, and only `daily=precipitation_sum`. Pinning GFS Seamless instead of Open-Meteo's Best Match trades location-specific model selection for a consistent global model, removes selection variability from the long request, and reduces cold-request work.
 
-Each response contains exactly 365 prior daily dates, today, and seven strictly future daily dates (373 dates total). The historical values are reconstructed forecast-model data, not station observations; the seven future values are the model forecast.
+Each response contains exactly 365 prior daily dates, today, and seven strictly future daily dates (373 dates total). The historical values are reconstructed GFS Seamless forecast-model data, not station observations; the seven future values are the GFS Seamless forecast.
 
-The plugin refreshes every three hours. A year-long response can take longer than a normal forecast request.
+The plugin refreshes every three hours. Pinning one global model keeps the request shape predictable while retaining the full chart span.

@@ -3,7 +3,7 @@ name: Rainfall History
 strategy: polling
 polling_verb: get
 polling_url: |
-  https://historical-forecast-api.open-meteo.com/v1/forecast?latitude={{ latitude | default: 33.03 }}&longitude={{ longitude | default: -84.94 }}&past_days=365&forecast_days=8&daily=precipitation_sum&current=precipitation&timezone=auto&precipitation_unit={{ precipitation_unit | default: 'inch' }}
+  https://historical-forecast-api.open-meteo.com/v1/forecast?latitude={{ latitude | default: 33.03 }}&longitude={{ longitude | default: -84.94 }}&past_days=365&forecast_days=8&daily=precipitation_sum&current=precipitation&timezone=auto&precipitation_unit={{ precipitation_unit | default: 'inch' }}&models=gfs_seamless
 refresh_interval: 180
 no_screen_padding: "yes"
 dark_mode: "no"
