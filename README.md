@@ -13,16 +13,24 @@ Copy `example.env` to `.env` when needed.
 
 ## Recipes
 
-| Recipe                          | Purpose                                                |
-| ------------------------------- | ------------------------------------------------------ |
-| `larapaper/weather-map`         | Render any public map image URL.                       |
-| `larapaper/xkcd-comic`          | Render the latest XKCD comic.                          |
-| `larapaper/farside-comic`       | Render one comic from the Far Side daily RSS feed.     |
-| `larapaper/lds-quotes`          | Render a random quote from Gospel Quotes.              |
-| `larapaper/github-commit-graph` | Render GitHub contribution data from GraphQL.          |
-| `larapaper/wikipedia-current-events` | Show selected current-day Wikipedia events.        |
-| `larapaper/wikipedia-featured-article` | Show Wikipedia's featured article with image and QR code. |
-| `larapaper/days-left-this-year` | Stoic-calendar grid of days passed and left this year. |
+| Recipe | Purpose |
+| --- | --- |
+| `larapaper/air-quality-history` | Show current US AQI beside a 92-day daily maximum chart. |
+| `larapaper/apple-reminders-bridge` | Render Apple Reminders data from a user-supplied bridge endpoint. |
+| `larapaper/calvin-and-hobbes-comic` | Render a random Calvin and Hobbes comic. |
+| `larapaper/days-left-this-year` | Show passed, current, and remaining days in a year calendar. |
+| `larapaper/farside-comic` | Render a random Far Side comic. |
+| `larapaper/github-commit-graph` | Render GitHub contribution graph data. |
+| `larapaper/home-assistant-calendar` | Render a rolling two-week Home Assistant calendar. |
+| `larapaper/lds-quotes` | Render a random LDS quote. |
+| `larapaper/rainfall-history` | Show 365 days of rainfall history and an eight-day forecast. |
+| `larapaper/snowfall-history` | Show 365 days of snowfall history and an eight-day forecast. |
+| `larapaper/weather-glance` | Render current temperature with an hourly or daily forecast. |
+| `larapaper/weather-history` | Show 365 days of temperature history and an eight-day forecast. |
+| `larapaper/weather-map` | Render a configurable public weather map image. |
+| `larapaper/wikipedia-current-events` | Show current Wikipedia events. |
+| `larapaper/wikipedia-featured-article` | Show today's featured Wikipedia article with image and QR code. |
+| `larapaper/xkcd-comic` | Render the latest XKCD comic. |
 
 Import a recipe directory as a LaraPaper plugin archive.
 
