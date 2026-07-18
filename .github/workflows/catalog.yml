@@ -1,6 +1,7 @@
 name: Catalog
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - catalog.yaml
