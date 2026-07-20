@@ -13,7 +13,7 @@
 {% assign quote_size_class = "lds-quotes__quote--long" %}
 {% if quote_length <= 180 %}
   {% assign quote_size_class = "lds-quotes__quote--short" %}
-{% elsif quote_length <= 420 %}
+{% elsif quote_length <= 380 %}
   {% assign quote_size_class = "lds-quotes__quote--medium" %}
 {% elsif quote_length <= 900 %}
   {% assign quote_size_class = "lds-quotes__quote--long" %}
@@ -68,18 +68,18 @@
   }
 
   .lds-quotes__quote--long {
-    font-size: 23px;
+    font-size: 22px;
     max-width: 96%;
   }
 
   .lds-quotes__quote--xlong {
-    font-size: 19px;
+    font-size: 18px;
     line-height: 1.03;
     max-width: 98%;
   }
 
   .lds-quotes__quote--max {
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1.02;
     max-width: 99%;
   }
@@ -124,15 +124,15 @@
   }
 
   .screen--lg .lds-quotes__quote--long {
-    font-size: 26px;
+    font-size: 25px;
   }
 
   .screen--lg .lds-quotes__quote--xlong {
-    font-size: 21px;
+    font-size: 20px;
   }
 
   .screen--lg .lds-quotes__quote--max {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .screen--portrait .lds-quotes__content {
@@ -152,15 +152,15 @@
   }
 
   .screen--portrait .lds-quotes__quote--long {
-    font-size: 20px;
+    font-size: 19px;
   }
 
   .screen--portrait .lds-quotes__quote--xlong {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .screen--portrait .lds-quotes__quote--max {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .screen--portrait .lds-quotes__author {
@@ -190,15 +190,15 @@
     }
 
     .lds-quotes__quote--long {
-      font-size: clamp(26px, 2.3vh, 34px);
+      font-size: clamp(25px, 2.2vh, 33px);
     }
 
     .lds-quotes__quote--xlong {
-      font-size: clamp(26px, 2.3vh, 34px);
+      font-size: clamp(25px, 2.2vh, 33px);
     }
 
     .lds-quotes__quote--max {
-      font-size: clamp(20px, 1.8vh, 28px);
+      font-size: clamp(19px, 1.7vh, 27px);
     }
 
     .lds-quotes__author {
