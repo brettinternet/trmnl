@@ -111,9 +111,11 @@
     }
 
     .wikipedia-current-events__list {
-        align-content: start;
+        align-content: center;
+        align-content: safe center;
         display: grid;
         gap: 9px 18px;
+        height: 100%;
         grid-template-columns: repeat({{ $eventColumns }}, minmax(0, 1fr));
     }
 
