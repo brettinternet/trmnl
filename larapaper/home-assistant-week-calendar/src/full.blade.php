@@ -180,9 +180,9 @@
     .week-calendar__header { height: 45px; border-bottom: 1px solid #777; }
     .week-calendar__corner { display: flex; align-items: center; font-size: 13px; font-weight: 600; }
     .week-calendar__day-heading { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid #bbb; }
-    .week-calendar__day-name { font-size: 11px; text-transform: uppercase; }
-    .week-calendar__day-number { margin-top: 2px; font-size: 18px; font-weight: 600; line-height: 20px; }
-    .week-calendar__day-number--today { width: 25px; border-radius: 50%; background: #000; color: #fff; text-align: center; }
+    .week-calendar__day-name { font-size: 11px; line-height: 11px; text-transform: uppercase; }
+    .week-calendar__day-number { margin-top: 2px; font-size: 18px; font-weight: 600; line-height: 24px; }
+    .week-calendar__day-number--today { display: inline-flex; width: 24px; height: 24px; flex: 0 0 24px; align-items: center; justify-content: center; border-radius: 50%; background: #000; color: #fff; line-height: 1; }
     .week-calendar__all-day { height: {{ $allDayHeight }}px; border-bottom: 1px solid #777; }
     .week-calendar__all-day-label { padding-top: 4px; color: #555; font-size: 8px; text-transform: uppercase; }
     .week-calendar__all-day-column { min-width: 0; padding: 2px; border-left: 1px solid #bbb; overflow: hidden; }
@@ -192,7 +192,7 @@
     .week-calendar__time { position: absolute; right: 5px; transform: translateY(-50%); color: #555; font-size: 8px; white-space: nowrap; }
     .week-calendar__time:first-child { transform: none; }
     .week-calendar__day { position: relative; min-width: 0; border-left: 1px solid #999; }
-    .week-calendar__hour-line { position: absolute; right: 0; left: 0; border-top: 1px solid #ddd; }
+    .week-calendar__hour-line { position: absolute; right: 0; left: 0; border-top: 1px solid #aaa; }
     .week-calendar__event { position: absolute; min-height: 12px; padding: 2px 3px; overflow: hidden; border-left: 3px solid #000; border-radius: 2px; background: #d5d5d5; color: #000; font-size: 9px; line-height: 10px; }
     .week-calendar__event--compact { display: flex; align-items: center; padding-top: 1px; padding-bottom: 1px; }
     .week-calendar__event--compact .week-calendar__event-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
