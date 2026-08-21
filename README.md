@@ -22,6 +22,7 @@ Copy `example.env` to `.env` when needed.
 | `larapaper/farside-comic` | Render a random Far Side comic. |
 | `larapaper/github-commit-graph` | Render GitHub contribution graph data. |
 | `larapaper/home-assistant-calendar` | Render a rolling two-week Home Assistant calendar. |
+| `larapaper/home-assistant-week-calendar` | Render Home Assistant events in a week or three-day time grid. |
 | `larapaper/lds-quotes` | Render a random LDS quote. |
 | `larapaper/rainfall-history` | Show 365 days of rainfall history and an eight-day forecast. |
 | `larapaper/snowfall-history` | Show 365 days of snowfall history and an eight-day forecast. |

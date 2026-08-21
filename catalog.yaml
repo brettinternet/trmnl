@@ -85,6 +85,18 @@ brettinternet-trmnl-home-assistant-calendar:
       compatibility: true
   author:
     github: brettinternet
+brettinternet-trmnl-home-assistant-week-calendar:
+  name: 'Home Assistant Week Calendar'
+  trmnlp:
+    repo: 'https://github.com/brettinternet/trmnl'
+    zip_url: 'https://github.com/brettinternet/trmnl/releases/download/catalog-artifacts/home-assistant-week-calendar.zip'
+    zip_entry_path: null
+    version: main
+  byos:
+    byos_laravel:
+      compatibility: true
+  author:
+    github: brettinternet
 brettinternet-trmnl-lds-quotes:
   name: 'LDS Quotes'
   trmnlp:
