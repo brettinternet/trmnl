@@ -4,7 +4,7 @@ Import this directory as a LaraPaper recipe plugin archive.
 
 Renders Home Assistant calendar events in a traditional time-grid calendar. All-day
 events appear above the grid, and timed events appear between hour markers. The grid
-normally shows 7:00 AM through 9:00 PM, expanding only when an event falls outside
+normally shows 9:00 AM through 8:00 PM, expanding only when an event falls outside
 that window.
 
 ## Files

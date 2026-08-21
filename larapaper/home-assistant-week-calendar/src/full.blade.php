@@ -83,8 +83,8 @@
         return !$event['all_day'] && $days->contains(fn ($day) => $occursOn($event, $day['date']));
     });
 
-    $windowStartHour = 7;
-    $windowEndHour = 21;
+    $windowStartHour = 9;
+    $windowEndHour = 20;
 
     foreach ($days as $day) {
         $dayStart = $day['date']->copy()->startOfDay();
@@ -194,6 +194,8 @@
     .week-calendar__day { position: relative; min-width: 0; border-left: 1px solid #999; }
     .week-calendar__hour-line { position: absolute; right: 0; left: 0; border-top: 1px solid #ddd; }
     .week-calendar__event { position: absolute; min-height: 12px; padding: 2px 3px; overflow: hidden; border-left: 3px solid #000; border-radius: 2px; background: #d5d5d5; color: #000; font-size: 9px; line-height: 10px; }
+    .week-calendar__event--compact { display: flex; align-items: center; padding-top: 1px; padding-bottom: 1px; }
+    .week-calendar__event--compact .week-calendar__event-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .week-calendar__event-time { display: block; font-size: 7px; font-weight: 400; white-space: nowrap; }
     .week-calendar__event-title { display: block; font-weight: 700; }
     .week-calendar__empty { display: flex; height: {{ $gridHeight }}px; align-items: center; justify-content: center; color: #555; font-size: 14px; }
@@ -252,9 +254,12 @@
                                 $height = (($event['end_minute'] - $event['start_minute']) / $windowMinutes) * 100;
                                 $width = 100 / $event['lane_count'];
                                 $left = $event['lane'] * $width;
+                                $compact = ($height / 100) * $gridHeight < 22;
                             @endphp
-                            <div class="week-calendar__event" style="top: {{ $top }}%; height: {{ $height }}%; left: {{ $left }}%; width: {{ $width }}%;">
-                                <span class="week-calendar__event-time">{{ $event['start']->format('g:i A') }}</span>
+                            <div class="week-calendar__event @if($compact) week-calendar__event--compact @endif" style="top: {{ $top }}%; height: {{ $height }}%; left: {{ $left }}%; width: {{ $width }}%;">
+                                @unless($compact)
+                                    <span class="week-calendar__event-time">{{ $event['start']->format('g:i A') }}</span>
+                                @endunless
                                 <span class="week-calendar__event-title">{{ $event['summary'] }}</span>
                             </div>
                         @endforeach
