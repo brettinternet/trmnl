@@ -413,6 +413,20 @@ export type FetchImpl = typeof fetch;
 
 const SETUP_TIMEOUT_MS = 10_000;
 
+async function withRequestTimeout<T>(
+  timeoutMs: number,
+  operation: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await operation(controller.signal);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export type SetupCredentials = { api_key: string; friendly_id: string };
 
 /**
@@ -426,17 +440,15 @@ export async function fetchSetup(
   fetchImpl: FetchImpl = fetch,
 ): Promise<SetupCredentials> {
   const url = new URL("api/setup", config.baseUrl);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), SETUP_TIMEOUT_MS);
 
-  try {
+  return await withRequestTimeout(SETUP_TIMEOUT_MS, async (signal) => {
     let response: Response;
     try {
       response = await fetchImpl(url, {
         method: "GET",
         headers: { ID: mac },
         redirect: "error",
-        signal: controller.signal,
+        signal,
       });
     } catch {
       throw new LarapaperClientError("setup_failed", "Larapaper setup request failed");
@@ -475,9 +487,7 @@ export async function fetchSetup(
     }
 
     return { api_key: body.api_key, friendly_id: body.friendly_id };
-  } finally {
-    clearTimeout(timeout);
-  }
+  });
 }
 
 export const SETUP_RETRY_DELAYS_MS = [5_000, 10_000, 20_000, 40_000, 60_000] as const;
@@ -600,17 +610,15 @@ export async function fetchDisplay(
   fetchImpl: FetchImpl = fetch,
 ): Promise<DisplayResult> {
   const url = new URL("api/display", config.baseUrl);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), DISPLAY_TIMEOUT_MS);
 
-  try {
+  return await withRequestTimeout(DISPLAY_TIMEOUT_MS, async (signal) => {
     let response: Response;
     try {
       response = await fetchImpl(url, {
         method: "GET",
         headers: { ID: state.mac, "Access-Token": state.api_key },
         redirect: "error",
-        signal: controller.signal,
+        signal,
       });
     } catch {
       throw new LarapaperClientError("display_failed", "Larapaper display request failed");
@@ -663,7 +671,5 @@ export async function fetchDisplay(
       imageUrl,
       effectiveIntervalSeconds: Math.max(rate, config.minPollSeconds),
     };
-  } finally {
-    clearTimeout(timeout);
-  }
+  });
 }
