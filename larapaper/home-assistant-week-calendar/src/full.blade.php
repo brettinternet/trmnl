@@ -168,26 +168,26 @@
     }
 
     $allDayHeight = $maxAllDayRows > 0 ? 18 + ($maxAllDayRows * 19) : 0;
-    $gridHeight = 322 - $allDayHeight;
+    $referenceGridHeight = 322 - $allDayHeight;
     $formatHour = fn ($hour) => Carbon::createFromTime($hour % 24, 0)->format('g A');
 @endphp
 
 <style>
-    .week-calendar { height: 100%; overflow: hidden; }
+    .week-calendar { height: 100%; min-height: 0; overflow: hidden; }
     .week-calendar__header,
     .week-calendar__all-day,
     .week-calendar__body { display: grid; grid-template-columns: 42px repeat({{ $dayCount }}, minmax(0, 1fr)); }
-    .week-calendar__header { height: 45px; border-bottom: 1px solid #777; }
+    .week-calendar__header { flex: 0 0 45px; height: 45px; border-bottom: 1px solid #777; }
     .week-calendar__corner { display: flex; align-items: center; font-size: 13px; font-weight: 600; }
     .week-calendar__day-heading { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid #bbb; }
     .week-calendar__day-name { font-size: 11px; line-height: 11px; text-transform: uppercase; }
     .week-calendar__day-number { margin-top: 2px; font-size: 18px; font-weight: 600; line-height: 24px; }
     .week-calendar__day-number--today { display: inline-flex; width: 24px; height: 24px; flex: 0 0 24px; align-items: center; justify-content: center; border-radius: 50%; background: #000; color: #fff; line-height: 1; }
-    .week-calendar__all-day { height: {{ $allDayHeight }}px; border-bottom: 1px solid #777; }
+    .week-calendar__all-day { flex: 0 0 {{ $allDayHeight }}px; height: {{ $allDayHeight }}px; border-bottom: 1px solid #777; }
     .week-calendar__all-day-label { padding-top: 4px; color: #555; font-size: 8px; text-transform: uppercase; }
     .week-calendar__all-day-column { min-width: 0; padding: 2px; border-left: 1px solid #bbb; overflow: hidden; }
     .week-calendar__all-day-event { height: 17px; margin-bottom: 2px; padding: 1px 3px; overflow: hidden; border-radius: 2px; background: #333; color: #fff; font-size: 9px; font-weight: 600; line-height: 15px; text-overflow: ellipsis; white-space: nowrap; }
-    .week-calendar__body { height: {{ $gridHeight }}px; }
+    .week-calendar__body { flex: 1 1 0; min-height: 0; }
     .week-calendar__times { position: relative; }
     .week-calendar__time { position: absolute; right: 5px; transform: translateY(-50%); color: #555; font-size: 8px; white-space: nowrap; }
     .week-calendar__time:first-child { transform: none; }
@@ -198,7 +198,7 @@
     .week-calendar__event--compact .week-calendar__event-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .week-calendar__event-time { display: block; font-size: 7px; font-weight: 400; white-space: nowrap; }
     .week-calendar__event-title { display: block; font-weight: 700; }
-    .week-calendar__empty { display: flex; height: {{ $gridHeight }}px; align-items: center; justify-content: center; color: #555; font-size: 14px; }
+    .week-calendar__empty { display: flex; flex: 1 1 0; min-height: 0; align-items: center; justify-content: center; color: #555; font-size: 14px; }
 </style>
 
 @props(['size' => 'full'])
@@ -254,7 +254,7 @@
                                 $height = (($event['end_minute'] - $event['start_minute']) / $windowMinutes) * 100;
                                 $width = 100 / $event['lane_count'];
                                 $left = $event['lane'] * $width;
-                                $compact = ($height / 100) * $gridHeight < 22;
+                                $compact = ($height / 100) * $referenceGridHeight < 22;
                             @endphp
                             <div class="week-calendar__event @if($compact) week-calendar__event--compact @endif" style="top: {{ $top }}%; height: {{ $height }}%; left: {{ $left }}%; width: {{ $width }}%;">
                                 @unless($compact)
