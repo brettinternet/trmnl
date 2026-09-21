@@ -143,6 +143,22 @@ async function statStateFile(stateFilePath: string) {
   }
 }
 
+function assertMacMatches(
+  mac: string,
+  expectedMac: string | undefined,
+  stateFilePath: string,
+  context: "state file" | "provisioning",
+): void {
+  if (expectedMac === undefined || mac === expectedMac) return;
+
+  const message =
+    context === "state file"
+      ? `Environment/state MAC mismatch in ${stateFilePath}: persisted MAC does not match expected MAC`
+      : `provisionDeviceOnce: existingState MAC ${mac} does not match requested MAC ${expectedMac}`;
+
+  throw new Error(message);
+}
+
 export async function loadState(
   stateFilePath: string,
   expectedMac?: string,
@@ -172,11 +188,7 @@ export async function loadState(
   }
 
   const state = normalizeState(parsed, stateFilePath);
-  if (expectedMac !== undefined && state.mac !== expectedMac) {
-    throw new Error(
-      `Environment/state MAC mismatch in ${stateFilePath}: persisted MAC does not match expected MAC`,
-    );
-  }
+  assertMacMatches(state.mac, expectedMac, stateFilePath, "state file");
   return state;
 }
 
@@ -195,10 +207,8 @@ export async function resolveMacAndState(
 
   if (configuredMac !== undefined) {
     const mac = canonicalizeMac(configuredMac);
-    if (existing !== undefined && existing.mac !== mac) {
-      throw new Error(
-        `Environment/state MAC mismatch in ${stateFilePath}: persisted MAC does not match expected MAC`,
-      );
+    if (existing !== undefined) {
+      assertMacMatches(existing.mac, mac, stateFilePath, "state file");
     }
     return { mac, state: existing };
   }
@@ -519,10 +529,8 @@ export async function provisionDeviceOnce(
   existingState: BridgeState | undefined,
   fetchImpl: FetchImpl = fetch,
 ): Promise<CompleteState> {
-  if (existingState !== undefined && existingState.mac !== mac) {
-    throw new Error(
-      `provisionDeviceOnce: existingState MAC ${existingState.mac} does not match requested MAC ${mac}`,
-    );
+  if (existingState !== undefined) {
+    assertMacMatches(existingState.mac, mac, config.stateFile, "provisioning");
   }
 
   if (existingState !== undefined && isCompleteState(existingState)) {
