@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require "yaml"
+require_relative "catalog-helpers"
 
 class CatalogError < StandardError; end
 
@@ -33,11 +34,9 @@ def required_string!(mapping, key, label)
 end
 
 def template_for(source, label)
-  templates = Dir[File.join(source, "full.*")].select do |path|
-    File.file?(path) && (path.end_with?(".liquid") || path.end_with?(".blade.php"))
-  end
-  raise CatalogError, "#{label}: expected exactly one src/full.liquid or src/full.blade.php template" unless templates.length == 1
-  templates.first
+  template = catalog_template_for(source)
+  raise CatalogError, "#{label}: expected exactly one src/full.liquid or src/full.blade.php template" unless template
+  template
 end
 
 def archive_entries(path)
