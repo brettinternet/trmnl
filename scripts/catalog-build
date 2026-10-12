@@ -18,10 +18,7 @@ output = File.expand_path(output, root) unless output.start_with?("/")
 recipes_root = File.join(root, "larapaper")
 fail!("missing recipe directory: #{recipes_root}") unless File.directory?(recipes_root)
 
-recipes = Dir.children(recipes_root).sort.select do |name|
-  path = File.join(recipes_root, name)
-  File.directory?(path) && !name.start_with?(".")
-end
+recipes = catalog_recipe_slugs(recipes_root)
 fail!("no recipes found under #{recipes_root}") if recipes.empty?
 
 FileUtils.rm_rf(output)
