@@ -61,9 +61,7 @@ begin
   raise CatalogError, "catalog must contain at least one entry" if catalog.empty?
   fail! "missing recipe directory: #{recipes_root}" unless File.directory?(recipes_root)
 
-  recipes = Dir.children(recipes_root).sort.select do |name|
-    File.directory?(File.join(recipes_root, name)) && !name.start_with?(".")
-  end
+  recipes = catalog_recipe_slugs(recipes_root)
   raise CatalogError, "no recipes found under #{recipes_root}" if recipes.empty?
 
   expected_ids = recipes.map { |slug| "brettinternet-trmnl-#{slug}" }
