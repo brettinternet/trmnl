@@ -12,12 +12,6 @@
     $calendarDays = 14;
 
     $dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    $monthNamesShort = [
-        1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
-        5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug',
-        9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec'
-    ];
-
     $events = collect($rawEvents)->map(function ($event) use ($tz) {
         $startRaw = data_get($event, 'start.dateTime') ?? data_get($event, 'start.date');
         $endRaw = data_get($event, 'end.dateTime') ?? data_get($event, 'end.date');
