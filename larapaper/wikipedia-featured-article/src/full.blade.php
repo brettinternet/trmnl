@@ -24,8 +24,14 @@
         return is_scalar($value) ? trim((string) $value) : '';
     };
 
-    $is_http_url = static function (string $url): bool {
-        return (bool) preg_match('/^https?:\/\/[^\s]+$/i', $url);
+    $first_http_url = static function (string ...$urls): string {
+        foreach ($urls as $url) {
+            if (preg_match('/^https?:\/\/[^\s]+$/i', $url)) {
+                return $url;
+            }
+        }
+
+        return '';
     };
 
     $display_title = $text_value(data_get($article, 'titles.display'))
@@ -42,21 +48,14 @@
     $extract = $text_value(data_get($article, 'extract'));
     $article_date = $text_value(data_get($article, 'date'));
 
-    $image_url = $text_value(data_get($article, 'thumbnail.source'));
-    if (! $is_http_url($image_url)) {
-        $image_url = $text_value(data_get($article, 'originalimage.source'));
-    }
-    if (! $is_http_url($image_url)) {
-        $image_url = '';
-    }
-
-    $article_url = $text_value(data_get($article, 'content_urls.desktop.page'));
-    if (! $is_http_url($article_url)) {
-        $article_url = $text_value(data_get($article, 'content_urls.mobile.page'));
-    }
-    if (! $is_http_url($article_url)) {
-        $article_url = '';
-    }
+    $image_url = $first_http_url(
+        $text_value(data_get($article, 'thumbnail.source')),
+        $text_value(data_get($article, 'originalimage.source')),
+    );
+    $article_url = $first_http_url(
+        $text_value(data_get($article, 'content_urls.desktop.page')),
+        $text_value(data_get($article, 'content_urls.mobile.page')),
+    );
 
     $qr_url = $article_url !== ''
         ? 'https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=' . rawurlencode($article_url)
